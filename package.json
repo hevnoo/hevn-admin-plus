@@ -1,0 +1,39 @@
+{
+  "name": "hevn-admin-plus",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vue-tsc -b && vite build",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "@element-plus/icons-vue": "^2.3.1",
+    "axios": "^1.7.7",
+    "crypto-js": "^4.2.0",
+    "element-plus": "^2.8.6",
+    "js-cookie": "^3.0.5",
+    "pinia": "^2.2.4",
+    "spark-md5": "^3.0.2",
+    "uuid": "^10.0.0",
+    "vue": "^3.5.12",
+    "vue-i18n": "^11.0.1",
+    "vue-router": "^4.4.5",
+    "vxe-pc-ui": "^4.2.26",
+    "vxe-table": "^4.7.94",
+    "xe-utils": "^3.7.0"
+  },
+  "devDependencies": {
+    "@types/js-cookie": "^3.0.6",
+    "@types/node": "^22.7.9",
+    "@vitejs/plugin-vue": "^5.1.4",
+    "compression-webpack-plugin": "^11.1.0",
+    "sass": "^1.80.4",
+    "sass-loader": "^16.0.2",
+    "typescript": "~5.6.2",
+    "vite": "^5.4.9",
+    "vite-plugin-compression": "^0.5.1",
+    "vue-tsc": "^2.1.6"
+  }
+}

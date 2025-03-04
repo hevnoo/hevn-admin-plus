@@ -1,0 +1,170 @@
+/*
+  :global 是一个特殊的选择器，用于定义全局样式。
+  作用是能够在 scoped 样式中定义全局 CSS 规则，而不受组件的作用域限制。
+*/
+
+/**
+ * 全局定义 el-button 图标按钮在Header.vue的样式
+ * @class g-icon-button
+ */
+:global(.g-icon-button) {
+  width: 32px;
+  border: none !important;
+  font-size: 18px !important;
+}
+
+:global(.g-icon-button:hover) {
+  background-color: #f4f4f5 !important;
+  color: #606266 !important;
+}
+
+/**
+ * 全局定义 el-dropdown 下拉菜单样式
+ * @class g-dropdown
+ */
+$dropdown-hover-color: #303030;
+$dropdown-hover-bg-color: #f4f4f5;
+@mixin dropdown-hover-style {
+  background-color: $dropdown-hover-bg-color !important;
+  color: $dropdown-hover-color !important;
+}
+
+:global(.g-dropdown .el-dropdown-menu__item) {
+  margin: 0 4px;
+  border-radius: 4px;
+}
+
+:global(.g-dropdown .el-dropdown-menu__item:hover) {
+  @include dropdown-hover-style();
+}
+
+:global(.g-dropdown .el-dropdown-menu__item:not(.is-disabled):focus) {
+  @include dropdown-hover-style();
+}
+
+:global(.g-dropdown .el-dropdown-menu__item.is-disabled) {
+  background-color: transparent !important; // 确保禁用项的背景色为透明
+  color: #999999 !important; // 设置禁用项的文本颜色
+}
+
+/**
+ * 全局定义 el-menu 下拉菜单样式
+ * @class g-menu
+ */
+$menu-item-height: 45px;
+$menu-active-color: #2a68e4;
+$menu-active-bg-color: #dfe9fb;
+$menu-hover-bg-color: #f4f4f5;
+$menu-border-radius: 6px;
+$menu-transition: width 0.3s ease, padding 0.3s ease !important;
+@mixin menu-item-style {
+  position: relative !important;
+  height: $menu-item-height !important;
+  border-radius: $menu-border-radius;
+  z-index: 1;
+}
+@mixin menu-hover-style {
+  background-color: transparent !important;
+  color: none !important;
+  // color: #303030 !important;
+}
+@mixin menu-active-style {
+  background-color: transparent !important;
+  color: $menu-active-color !important;
+}
+// 子菜单高亮块伪类样式
+@mixin menu-hover-before-style {
+  content: "";
+  position: absolute;
+  top: 1px;
+  bottom: 1px;
+  left: 6px; /* 左侧空隙 */
+  right: 6px; /* 右侧空隙 */
+  background-color: $menu-hover-bg-color;
+  border-radius: $menu-border-radius; /* 圆角效果 */
+  z-index: -1; /* 将高亮块置于内容下方 */
+}
+// 子菜单高亮块伪类样式
+@mixin menu-active-before-style {
+  content: "";
+  position: absolute;
+  top: 1px;
+  bottom: 1px;
+  left: 6px; /* 左侧空隙 */
+  right: 6px; /* 右侧空隙 */
+  background-color: $menu-active-bg-color;
+  color: $menu-active-color !important;
+  border-radius: $menu-border-radius;
+  z-index: -1; /* 将高亮块置于内容下方 */
+}
+
+:global(.g-menu) {
+  border: none !important;
+}
+
+:global(.g-menu .el-menu-item) {
+  @include menu-item-style();
+}
+:global(.g-menu .el-sub-menu__title) {
+  @include menu-item-style();
+}
+:global(.g-menu .el-sub-menu .el-menu-item) {
+  @include menu-item-style();
+}
+
+// 选中样式
+:global(.g-menu .is-active) {
+  @include menu-active-style(); // 清除默认选中样式
+}
+:global(.g-menu .is-active:not(.el-sub-menu)::before) {
+  @include menu-active-before-style(); // 使用伪类高亮块样式
+}
+:global(.g-menu .is-active .el-sub-menu__title) {
+  // color: var(--el-menu-active-color) !important;
+  @include menu-active-style(); // 当前子选项选中时，父节点文字高亮
+}
+
+// 子菜单项高亮块样式
+:global(.g-menu .el-menu-item:not(.is-active):hover) {
+  @include menu-hover-style(); // 清除默认子菜单项高亮块样式
+}
+:global(.g-menu .el-menu-item:not(.is-active):hover::before) {
+  @include menu-hover-before-style(); // 使用伪类高亮块样式
+}
+
+// 父节点高亮块样式
+:global(.g-menu .el-sub-menu__title:not(.el-menu-item):hover) {
+  @include menu-hover-style(); // 清除默认父节点高亮块样式
+}
+:global(.g-menu .el-sub-menu__title:not(.el-menu-item):hover::before) {
+  @include menu-hover-before-style(); // 使用伪类高亮块样式
+}
+
+// el-menu--popup 全局弹框样式
+.el-menu--popup {
+  height: 100%;
+  width: 100%;
+  border: none;
+  border-radius: $menu-border-radius;
+  // .el-menu--popup > div:has(.is-active){
+  //   background-color: #FFF !important;
+  // }
+
+  .el-menu-item {
+    @include menu-item-style();
+
+    &:hover {
+      @include menu-hover-style();
+    }
+    &:hover::before {
+      @include menu-hover-before-style();
+    }
+
+    &.is-active {
+      @include menu-active-style();
+    }
+    &.is-active::before {
+      @include menu-active-before-style();
+    }
+  }
+}

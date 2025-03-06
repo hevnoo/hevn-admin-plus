@@ -1,189 +1,217 @@
 <template>
-  <div>
-    <vxe-grid ref="vxeTable" v-bind="gridOptions" v-on="gridEvents">
+  <div class="user-management">
+    <!-- 搜索表单组件 -->
+    <SearchForm
+      ref="searchFormRef"
+      @search="handleSearch"
+      @reset="handleReset"
+    />
+    
+    <!-- 表格部分 -->
+    <vxe-grid
+      ref="xGrid"
+      v-bind="gridOptions"
+      v-on="gridEvents"
+      :data="tableData"
+      :loading="loading"
+    >
       <!-- 工具栏 -->
-      <template #toolbarButtons>
-        <!-- <vxe-select v-model="selectRowSize" :options="dataOptions" @change="changeRowSizeEvent"></vxe-select> -->
-        <vxe-button status="primary" icon="vxe-icon-add" @click="handleToolbar('add')">新增</vxe-button>
-        <vxe-button status="error" icon="vxe-icon-delete" @click="handleToolbar('delete')">删除</vxe-button>
-        <vxe-button status="success" icon="vxe-icon-save" @click="handleToolbar('save')">保存</vxe-button>
+      <template #toolbar_buttons>
+        <vxe-button status="primary" @click="handleAdd">新增用户</vxe-button>
+        <vxe-button 
+          status="danger" 
+          :disabled="!selectedRows.length"
+          @click="handleBatchDelete"
+        >批量删除</vxe-button>
       </template>
+
       <!-- 操作列 -->
-      <template #activeColumn="{ row }">
-        <vxe-button mode="text" status="primary" icon="vxe-icon-edit" @click="handleActiveColumn('detail', row)"
-          >详情</vxe-button
-        >
-        <vxe-button mode="text" status="error" icon="vxe-icon-delete" @click="handleActiveColumn('delete', row)"
-          >删除</vxe-button
-        >
+      <template #operation="{ row }">
+        <vxe-button mode="text" status="primary" @click="handleView(row)">详情</vxe-button>
+        <vxe-button mode="text" status="primary" @click="handleEdit(row)">编辑</vxe-button>
+        <vxe-button mode="text" status="error"  @click="handleDelete(row)">删除</vxe-button>
       </template>
     </vxe-grid>
+
+    <!-- 弹窗容器 -->
+    <UserDialog
+      v-model:show="dialogConfig.show"
+      :type="dialogConfig.type"
+      :data="dialogConfig.data"
+      @success="handleDialogSuccess"
+    />
   </div>
 </template>
 
-<script lang="ts" setup>
-import { reactive, ref } from "vue";
-import type { VxeGridProps, VxeGridListeners } from "vxe-table";
-import { api } from "@/api";
+<script setup lang="ts">
+import { ref, reactive } from 'vue'
+import { api } from '@/api'
+import { SearchForm, UserDialog } from './components'
+import type { VxeGridInstance } from 'vxe-table'
+import { ElMessage } from 'element-plus'
+import dayjs from 'dayjs'
 
-interface RowVO {
-  id: number;
-  name: string;
-  nickname: string;
-  role: string;
-  sex: string;
-  age: number;
-  address: string;
-}
+const xGrid = ref<VxeGridInstance>()
+const loading = ref(false)
+const tableData = ref([])
+const selectedRows = ref([])
 
-const vxeTable = ref();
+// 弹窗配置
+const dialogConfig = reactive({
+  show: false,
+  type: '',  // add, edit, view
+  data: null
+})
 
-// 模拟后台接口
-const delApi = (removeRecords: RowVO[]) => {
-  return new Promise((resolve) => {
-    setTimeout(() => {
-      resolve({
-        result: [],
-        msg: `delete，${removeRecords.length}条`,
-      });
-    }, 100);
-  });
-};
-
-// 模拟后台接口
-const saveApi = (insertRecords: RowVO[]) => {
-  return new Promise((resolve) => {
-    setTimeout(() => {
-      resolve({
-        result: [],
-        msg: `success, ${insertRecords.length}条`,
-      });
-    }, 100);
-  });
-};
-
-const gridOptions = reactive<VxeGridProps<RowVO>>({
+// 表格配置
+const gridOptions = reactive({
   border: false,
-  keepSource: true,
-  minHeight: "auto",
-  printConfig: {},
-  importConfig: {},
-  exportConfig: {},
+  showOverflow: true,
+  height: 500,
   columnConfig: {
-    resizable: true,
+    resizable: true
+  },
+  checkboxConfig: {
+    checkField: 'checked',
+    checkMethod: ({ row }) => {
+      return !row.isSystem // 可选择的校验方法，根据需要调整
+    }
   },
   pagerConfig: {
-    enabled: true,
+    total: 0,
     pageSize: 10,
-    pageSizes: [10, 20, 30, 50, 100],
+    pageSizes: [10, 20, 50, 100],
+    // layouts: ['PrevPage', 'JumpNumber', 'NextPage', 'FullJump', 'Sizes', 'Total']
   },
-  // editConfig: {
-  //   trigger: "click",
-  //   mode: "row",
-  //   showStatus: true,
-  // },
   toolbarConfig: {
     refresh: true,
-    import: true,
     export: true,
-    print: true,
     zoom: true,
     custom: true,
-    // buttons: [
-    //   { name: "新增", code: "myAdd", status: "primary" },
-    //   { name: "删除", code: "myDel", status: "error" },
-    //   { name: "保存", code: "mySave", status: "success" },
-    // ],
     slots: {
-      buttons: "toolbarButtons",
-    },
-  },
-  proxyConfig: {
-    props: {
-      result: "data.data",
-      total: "data.total",
-    },
-    ajax: {
-      // 接收 Promise
-      query: ({ page }) => {
-        return api.getList("users", {
-          page: page.currentPage,
-          pageSize: page.pageSize,
-          include: ["roles"],
-        });
-      },
-      // body 对象： { removeRecords }
-      delete: ({ body }) => {
-        return delApi(body.removeRecords);
-      },
-      // body 对象： { insertRecords, updateRecords, removeRecords, pendingRecords }
-      save: ({ body }) => {
-        return saveApi(body.insertRecords);
-      },
-    },
+      buttons: 'toolbar_buttons'
+    }
   },
   columns: [
-    { type: "checkbox", width: 50 },
-    { type: "seq", width: 70 },
-    { field: "username", title: "用户名", editRender: { autofocus: ".vxe-input--inner" } },
-    { field: "nickname", title: "昵称", editRender: {} },
-    { field: "email", title: "邮箱", editRender: {} },
-    { field: "phone", title: "手机号", editRender: {} },
-    { field: "role", title: "角色", editRender: {} },
-    { field: "status", title: "状态", showOverflow: true, editRender: {} },
-    { field: "activeColumn", title: "操作", fixed: "right", width: 200, slots: { default: "activeColumn" } },
-  ],
-});
+    { type: 'checkbox', width: 50 },
+    { type: 'seq', width: 60 },
+    { field: 'username', title: '用户名' },
+    { field: 'nickname', title: '昵称' },
+    { field: 'email', title: '邮箱' },
+    { field: 'status', title: '状态' },
+    { field: 'createtime', title: '创建时间',formatter: ({ cellValue }) => {
+        if (!cellValue) return '--'
+        return dayjs(cellValue).format('YYYY-MM-DD HH:mm:ss')
+      } },
+    { 
+      field: 'operation',
+      title: '操作',
+      fixed: 'right',
+      width: 200,
+      slots: { default: 'operation' }
+    }
+  ]
+})
 
-const gridEvents: VxeGridListeners = {
-  toolbarButtonClick(params) {
-    console.log(params.code);
-  },
-};
+// 在gridOptions中添加事件监听
+const gridEvents = {
+  'checkbox-change': handleSelectionChange,
+  'checkbox-all': handleSelectionChange
+}
 
-const handleToolbar = (code) => {
-  switch (code) {
-    case "add":
-      console.log(code);
-      break;
-    default:
-      {
-        console.log(code);
-      }
-      break;
+// 加载数据
+const loadData = async (params = {}) => {
+  loading.value = true
+  try {
+    const res = await api.getList('users', {
+      ...params,
+      include: ['roles']
+    })
+    // 确保tableData是一个数组
+    tableData.value = Array.isArray(res.data.data) ? res.data.data : []
+    
+    // 如果需要处理分页
+    if (xGrid.value) {
+      gridOptions.pagerConfig.total = res.data.total || 0
+    }
+  } catch (err) {
+    console.error(err)
+  } finally {
+    loading.value = false
   }
-};
+}
 
-const handleActiveColumn = (code, row) => {
-  switch (code) {
-    case "detail":
-      console.log(code, row);
-      break;
-    case "edit":
-      console.log(code, row);
-      break;
-    case "delete":
-      console.log(code, row);
-      break;
-    default:
-      {
-        console.log(code);
-      }
-      break;
+// 搜索处理
+function handleSearch(formData){
+  loadData(formData)
+}
+
+const handleReset = () => {
+  loadData()
+}
+
+// 新增
+const handleAdd = () => {
+  dialogConfig.type = 'add'
+  dialogConfig.data = null
+  dialogConfig.show = true
+}
+
+// 编辑
+const handleEdit = (row) => {
+  dialogConfig.type = 'edit'
+  dialogConfig.data = row
+  dialogConfig.show = true
+}
+
+// 查看
+const handleView = (row) => {
+  dialogConfig.type = 'view'
+  dialogConfig.data = row
+  dialogConfig.show = true
+}
+
+// 删除
+const handleDelete = async (row) => {
+  try {
+    await api.delete('users', { id: row.id })
+    ElMessage({
+    message: '删除成功',
+    type: 'success',
+    plain: true,
+  })
+    loadData()
+  } catch (err) {
+    console.error(err)
   }
-};
+}
 
-// // 不使用 proxyConfig 的话，需要手动处理：
-// async function loadData() {
-//      loading.value = true;
-//      try {
-//        const data = await fetchApi(current, pageSize);
-//        tableData.value = data.result;
-//        total.value = data.page.total;
-//      } finally {
-//        loading.value = false;
-//      }
-//    }
+// 批量删除
+const handleBatchDelete = async () => {
+  try {
+    const ids = selectedRows.value.map(row => row.id)
+    await api.delete('users', { ids })
+    ElMessage({
+    message: '批量删除成功',
+    type: 'success',
+    plain: true,
+  })
+    loadData()
+  } catch (err) {
+    console.error(err)
+  }
+}
+
+// 弹窗成功回调
+const handleDialogSuccess = () => {
+  loadData()
+}
+
+// 添加选择行事件处理
+function handleSelectionChange ({ checked, records }) {
+  selectedRows.value = records
+}
+
+// 初始化
+loadData()
 </script>
-
-<style scoped lang="scss"></style>

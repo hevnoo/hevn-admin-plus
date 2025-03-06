@@ -1,15 +1,20 @@
 <template>
   <div class="home-wrapper">
+    <SearchForm />
     <BaseTable></BaseTable>
-    <div>{{ $t("message.hello") }}</div>
-    <div style="width: 200px; height: 100px">
-      <div class="test">1234</div>
-      <div>1234</div>
-    </div>
   </div>
 </template>
 
 <script setup lang="ts">
+import { BaseTable } from "@/components/basic";
+import SearchForm from "./components/SearchForm.vue";
+import { ref, onMounted, computed, watch, watchEffect, nextTick } from "vue";
+import { useRoute, useRouter } from "vue-router";
+import XEUtils from "xe-utils";
+import { storeToRefs } from "pinia";
+
+import request from "@/api/request";
+import { api } from "@/api";
 import { useI18n } from "vue-i18n";
 
 const { locale } = useI18n();
@@ -18,14 +23,6 @@ const { locale } = useI18n();
 const changeLanguage = (lang) => {
   locale.value = lang; // 切换语言
 };
-import { BaseTable } from "@/components/basic";
-import { ref, onMounted, computed, watch, watchEffect, nextTick } from "vue";
-import { useRoute, useRouter } from "vue-router";
-import XEUtils from "xe-utils";
-import { storeToRefs } from "pinia";
-
-import request from "@/api/request";
-import { api } from "@/api";
 
 const route = useRoute();
 const router = useRouter();

@@ -1,21 +1,49 @@
 <template>
   <div class="user-management">
     <!-- 搜索表单组件 -->
-    <SearchForm ref="searchFormRef" @search="handleSearch" @reset="handleReset" />
+    <SearchForm
+      ref="searchFormRef"
+      @search="handleSearch"
+      @reset="handleReset"
+    />
 
     <!-- 表格部分 -->
-    <vxe-grid ref="xGrid" v-bind="gridOptions" v-on="gridEvents" :data="tableData" :loading="loading">
+    <vxe-grid
+      ref="xGrid"
+      v-bind="gridOptions"
+      v-on="gridEvents"
+      :data="tableData"
+      :loading="loading"
+    >
       <!-- 工具栏 -->
       <template #toolbar_buttons>
         <vxe-button status="primary" @click="handleAdd">新增用户</vxe-button>
-        <vxe-button status="danger" :disabled="!selectedRows.length" @click="handleBatchDelete">批量删除</vxe-button>
+        <vxe-button
+          status="danger"
+          :disabled="!selectedRows.length"
+          @click="handleBatchDelete"
+          >批量删除</vxe-button
+        >
+      </template>
+
+      <!-- column -->
+      <template #roles="{ row }">
+        <span style="color: #67c23a">
+          {{ row.roles.map((role) => role.name).join(",\n") }}
+        </span>
       </template>
 
       <!-- 操作列 -->
       <template #operation="{ row }">
-        <vxe-button mode="text" status="primary" @click="handleView(row)">详情</vxe-button>
-        <vxe-button mode="text" status="primary" @click="handleEdit(row)">编辑</vxe-button>
-        <vxe-button mode="text" status="error" @click="handleDelete(row)">删除</vxe-button>
+        <vxe-button mode="text" status="primary" @click="handleView(row)"
+          >详情</vxe-button
+        >
+        <vxe-button mode="text" status="primary" @click="handleEdit(row)"
+          >编辑</vxe-button
+        >
+        <vxe-button mode="text" status="error" @click="handleDelete(row)"
+          >删除</vxe-button
+        >
       </template>
     </vxe-grid>
 
@@ -52,14 +80,22 @@ const dialogConfig = reactive({
 // 表格配置
 const gridOptions = reactive({
   border: false,
+  stripe: true,
+  loading: true,
   showOverflow: true,
   // height: 500,
   size: "medium", // mini, small, medium, large
   columnConfig: {
     resizable: true,
   },
+  rowConfig: {
+    isHover: true,
+  },
   checkboxConfig: {
     checkField: "checked",
+    // labelField: 'id',
+    highlight: true,
+    range: true,
     checkMethod: ({ row }) => {
       return !row.isSystem; // 可选择的校验方法，根据需要调整
     },
@@ -88,10 +124,15 @@ const gridOptions = reactive({
     {
       field: "roles",
       title: "角色",
-      formatter: ({ cellValue }) => {
-        if (!cellValue) return "--";
-        return cellValue.map((role) => role.name).join(",");
-      },
+      // cellRender: {
+      //   name: "$html",
+      //   content: ({ row, column, cellValue }) => {
+      //     console.log({ row, column, cellValue })
+      //     if (!row.roles) return '--';
+      //     return `<span style="color: #67C23A">${row.roles.map(role => role.name).join(',')}</span>`;
+      //   }
+      // },
+      slots: { default: "roles" },
     },
     {
       field: "status",
@@ -143,7 +184,6 @@ const gridEvents = {
 
 // 加载数据
 const loadData = async (params: any = {}) => {
-  console.log(params);
   loading.value = true;
   try {
     const res = await api.getList("users", {

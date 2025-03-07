@@ -23,7 +23,7 @@ import "@/styles/index.scss";
 //vxeTable
 import VxeUI from "vxe-pc-ui";
 import "vxe-pc-ui/lib/style.css";
-import VxeUITable from "vxe-table";
+import VxeTable from "vxe-table";
 import "vxe-table/lib/style.css";
 // 国际化
 import { createI18n } from "vue-i18n";
@@ -68,6 +68,6 @@ for (const [key, component] of Object.entries(ElementPlusIconsVue)) {
   app.component(key, component);
 }
 app.use(VxeUI);
-app.use(VxeUITable);
+app.use(VxeTable);
 
 app.mount("#app");

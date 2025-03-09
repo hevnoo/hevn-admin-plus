@@ -34,6 +34,7 @@ import { ElMessage, ElMessageBox } from "element-plus";
 import { useRouter } from "vue-router";
 import { Icon } from "@/components/basic";
 import { auth } from "@/store/core/auth";
+import { SERVER_URL } from "@/config";
 
 const router = useRouter();
 const useAuth = auth();
@@ -48,7 +49,7 @@ const localUserInfo = JSON.parse(localStorage.getItem("userInfo") || "{}");
 const userInfo = ref<any>({
   name: localUserInfo?.nickname || localUserInfo?.username || "用户",
   email: localUserInfo?.email || localUserInfo?.phone || "email",
-  avatar: localUserInfo?.head_img || "src/assets/img/avatar.jpg",
+  avatar: localUserInfo?.avatar ? SERVER_URL + localUserInfo?.avatar : "src/assets/img/avatar.jpg",
 });
 
 const handleCommand = (command) => {
@@ -97,6 +98,7 @@ const handleCommand = (command) => {
   border-radius: 50%;
   border: none;
   cursor: pointer;
+  object-fit: cover;
 }
 
 .user-dropdown-item {
@@ -110,6 +112,7 @@ const handleCommand = (command) => {
     border-radius: 50%;
     cursor: pointer;
     margin-right: 8px;
+    object-fit: cover;
   }
   &-userInfo {
     display: flex;

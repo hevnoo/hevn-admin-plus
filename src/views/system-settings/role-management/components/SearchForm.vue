@@ -23,8 +23,8 @@ const formData = ref({
 const formItems = [
   {
     span: 5,
-    field: "username",
-    title: "用户名",
+    field: "name",
+    title: "角色名称",
     clearable: true,
     itemRender: {
       name: "$input",
@@ -37,8 +37,8 @@ const formItems = [
   },
   {
     span: 5,
-    field: "email",
-    title: "邮箱",
+    field: "value",
+    title: "角色值",
     itemRender: {
       name: "$input",
       props: {
@@ -49,24 +49,7 @@ const formItems = [
     },
   },
   {
-    span: 5,
-    field: "status",
-    title: "状态",
-    itemRender: {
-      name: "$select",
-      options: [
-        { label: "启用", value: true },
-        { label: "禁用", value: false },
-      ],
-      props: {
-        clearable: true,
-        placeholder: "请选择",
-        transfer: true, // 添加 transfer
-      },
-    },
-  },
-  {
-    span: 9,
+    span: 14,
     align: "right",
     itemRender: {
       name: "$buttons",

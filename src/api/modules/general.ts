@@ -12,7 +12,10 @@ export const api = {
   // 获取列表
   // 参数：model: 模型名称，params: 查询参数（prisma语法）
   // 注意：如果需要获取外表关联数据，则需要使用include参数，如：{ include: ["menu"] }
-  getList: <T = any>(model: string, params: QueryParams = {}): Promise<BaseResponse<T[] | T>> => {
+  getList: <T = any>(
+    model: string,
+    params: QueryParams = {}
+  ): Promise<BaseResponse<T[] | T>> => {
     return request({
       url: `/api/${model}/getList`,
       method: "get",
@@ -24,7 +27,10 @@ export const api = {
   // data参数支持对象或数组对象：
   // 对象：{ id: 1, name: "test", menu: [1, 2], include: ["menu"] }
   // 数组：[{ id: 1, name: "test", menu: [1, 2], include: ["menu"] }, { id: 2, name: "test2", menu: [1, 2], include: ["menu"] }]
-  create: <T = any>(model: string, data: CreateParams): Promise<BaseResponse<T | T[]>> => {
+  create: <T = any>(
+    model: string,
+    data: CreateParams
+  ): Promise<BaseResponse<T | T[]>> => {
     return request({
       url: `/api/${model}/create`,
       method: "post",
@@ -36,9 +42,26 @@ export const api = {
   // data参数支持对象或数组对象：
   // 对象：{ id: 1, name: "test", menu: [1, 2], include: ["menu"] }
   // 数组：[{ id: 1, name: "test", menu: [1, 2], include: ["menu"] }, { id: 2, name: "test2", menu: [1, 2], include: ["menu"] }]
-  update: <T = any>(model: string, data: UpdateParams): Promise<BaseResponse<T | T[]>> => {
+  update: <T = any>(
+    model: string,
+    ...args: any
+  ): Promise<BaseResponse<T | T[]>> => {
+    // 处理不同的调用方式
+    let url = `/api/${model}/update`;
+    let data;
+
+    if (args.length === 1) {
+      // 方式1: update(model, data)
+      data = args[0];
+    } else if (args.length === 2) {
+      // 方式2: update(model, id, data)
+      const [id, updateData] = args;
+      url = `/api/${model}/update/${id}`;
+      data = updateData;
+    }
+
     return request({
-      url: `/api/${model}/update`,
+      url,
       method: "put",
       data,
     });
@@ -51,7 +74,10 @@ export const api = {
   // 字符串: "1"
   // 数组：[1, 2]
   // 数组对象：[{ id: 1 }, { id: 2 }]
-  delete: <T = any>(model: string, data: DeleteParams): Promise<BaseResponse<T>> => {
+  delete: <T = any>(
+    model: string,
+    data: DeleteParams
+  ): Promise<BaseResponse<T>> => {
     return request({
       url: `/api/${model}/delete`,
       method: "delete",
@@ -67,9 +93,14 @@ export const api = {
   // 数组：[1, 2]
   // 数组对象：[{ id: 1 }, { id: 2 }]
   // 注意：如果id是字符串，可能需要使用prisma的where语法，如：{ id: { equals: "1" } }
-  hardDelete: <T = any>(model: string, data: HardDeleteParams): Promise<BaseResponse<T>> => {
+  hardDelete: <T = any>(
+    model: string,
+    data: HardDeleteParams
+  ): Promise<BaseResponse<T>> => {
     const url =
-      typeof data === "object" && "id" in data ? `/api/${model}/hardDelete/${data.id}` : `/api/${model}/hardDelete`;
+      typeof data === "object" && "id" in data
+        ? `/api/${model}/hardDelete/${data.id}`
+        : `/api/${model}/hardDelete`;
 
     return request({
       url,

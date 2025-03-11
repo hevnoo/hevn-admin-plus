@@ -202,8 +202,8 @@ const loadData = async (params: any = {}) => {
         email: { contains: params.email },
         status: params.status,
       },
-      page: params.page,
-      pageSize: params.pageSize,
+      page: params.page || gridOptions.pagerConfig.currentPage,
+      pageSize: params.pageSize || gridOptions.pagerConfig.pageSize,
       include: ["roles"],
     });
 

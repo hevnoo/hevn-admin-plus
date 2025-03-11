@@ -1,23 +1,38 @@
 <template>
-  <div class="user-management">
+  <div class="dept-container">
     <!-- 搜索表单组件 -->
     <SearchForm ref="searchFormRef" @search="handleSearch" @reset="handleReset" />
 
     <!-- 表格部分 -->
-    <vxe-grid
-      ref="xGrid"
-      v-bind="gridOptions"
-      v-on="gridEvents"
-      :data="tableData"
-      :loading="loading"
-      @page-change="handlePageChange"
-    >
+    <vxe-grid ref="xGrid" v-bind="gridOptions" v-on="gridEvents" :data="tableData" :loading="loading">
       <!-- 工具栏 -->
       <template #toolbar_buttons>
-        <vxe-button status="primary" @click="handleAddDialog">新增角色</vxe-button>
+        <vxe-button status="primary" @click="handleAddDialog">新增部门</vxe-button>
         <vxe-button status="danger" :disabled="!selectedRows.length" @click="handleBatchDelete"
           >批量删除</vxe-button
         >
+      </template>
+      <template #toolbar_tools>
+        <vxe-button
+          v-if="expandStatus"
+          circle
+          style="margin-right: 0.72em"
+          @click="handleTreeIsExpand(false)"
+        >
+          <el-icon :size="16">
+            <Sort />
+          </el-icon>
+        </vxe-button>
+        <vxe-button
+          v-if="!expandStatus"
+          circle
+          style="margin-right: 0.72em"
+          @click="handleTreeIsExpand(true)"
+        >
+          <el-icon :size="16">
+            <Sort />
+          </el-icon>
+        </vxe-button>
       </template>
 
       <!-- 操作列 -->
@@ -59,7 +74,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive } from "vue";
+import { ref, reactive, nextTick } from "vue";
 import { api } from "@/api";
 import { SearchForm, FormDialog } from "./components";
 import type { VxeGridInstance } from "vxe-table";
@@ -114,22 +129,27 @@ const gridOptions = reactive({
   rowConfig: {
     isHover: true,
   },
+  treeConfig: {
+    transform: true,
+    rowField: "id",
+    parentField: "parent_id",
+    expandAll: true,
+  },
   checkboxConfig: {
     checkField: "checked",
     // labelField: 'id',
     highlight: true,
-    range: true, // 是否支持范围选择
+    // range: true, // 是否支持范围选择
     checkMethod: ({ row }) => {
       return !row.isSystem; // 可选择的校验方法，根据需要调整
     },
   },
-  pagerConfig: {
-    total: 0,
-    currentPage: 1,
-    pageSize: 10,
-    pageSizes: [10, 20, 50, 100],
-    // layouts: ['PrevPage', 'JumpNumber', 'NextPage', 'FullJump', 'Sizes', 'Total']
-  },
+  // pagerConfig: {
+  //   total: 0,
+  //   currentPage: 1,
+  //   pageSize: 10,
+  //   pageSizes: [10, 20, 50, 100],
+  // },
   toolbarConfig: {
     refresh: true,
     export: true,
@@ -137,19 +157,15 @@ const gridOptions = reactive({
     custom: true,
     slots: {
       buttons: "toolbar_buttons",
+      tools: "toolbar_tools",
     },
   },
   columns: [
     { type: "checkbox", width: 50 },
     { type: "seq", width: 60, align: "left" },
-    { field: "name", title: "角色名称" },
-    { field: "value", title: "角色值" },
-    { field: "description", title: "描述" },
-    {
-      field: "buttons",
-      title: "按钮",
-      slots: { default: "buttons" },
-    },
+    { field: "name", title: "部门名称", treeNode: true },
+    { field: "code", title: "部门编码" },
+    { field: "order", title: "排序" },
     {
       field: "createtime",
       title: "创建时间",
@@ -174,25 +190,40 @@ const gridEvents = {
   "checkbox-all": handleSelectionChange,
 };
 
+const expandStatus = ref<boolean>(gridOptions?.treeConfig?.expandAll ? true : false); // 记录当前收展状态
+// 展开或收缩树形结构
+const handleTreeIsExpand = (isExpand?: boolean) => {
+  nextTick(() => {
+    if (!gridOptions?.treeConfig) return;
+    if (isExpand === undefined) {
+      isExpand = gridOptions.treeConfig.expandAll === true ? true : false;
+    }
+    if (xGrid.value && xGrid.value.treeConfig) {
+      xGrid.value.setAllTreeExpand(isExpand);
+      expandStatus.value = isExpand;
+    }
+  });
+};
+
 // 加载数据
 const loadData = async (params: any = {}) => {
   loading.value = true;
   try {
-    const res = await api.getList("roles", {
+    const res = await api.getList("department", {
       where: {
         name: { contains: params.name },
-        value: { contains: params.value },
+        code: { contains: params.code },
+        order: params.order,
       },
-      page: params.page || gridOptions.pagerConfig.currentPage,
-      pageSize: params.pageSize || gridOptions.pagerConfig.pageSize,
-      include: ["buttons"],
+      orderBy: [{ order: "asc" }, { createtime: "desc" }],
     });
 
     tableData.value = Array.isArray(res.data.data) ? res.data.data : [];
 
     // 如果需要处理分页
     if (xGrid.value) {
-      gridOptions.pagerConfig.total = res.data.total || 0;
+      // gridOptions.pagerConfig.total = res.data.total || 0;
+      handleTreeIsExpand();
     }
   } catch (err) {
     console.error(err);
@@ -208,13 +239,6 @@ function handleSearch(formData) {
 
 const handleReset = () => {
   loadData();
-};
-
-// 分页处理
-const handlePageChange = (params) => {
-  gridOptions.pagerConfig.currentPage = params.currentPage;
-  gridOptions.pagerConfig.pageSize = params.pageSize;
-  loadData({ page: params.currentPage, pageSize: params.pageSize });
 };
 
 // 新增
@@ -247,7 +271,7 @@ const handleDelete = async (row) => {
       type: "warning",
     })
       .then(async () => {
-        const res = await api.delete("roles", { id: row.id });
+        const res = await api.delete("department", { id: row.id });
         if (res.data.code === 200) {
           loadData();
           ElMessage({
@@ -275,7 +299,7 @@ const handleBatchDelete = async () => {
     })
       .then(async () => {
         const ids = selectedRows.value.map((row: any) => row.id);
-        const res = await api.delete("roles", ids);
+        const res = await api.delete("department", ids);
         if (res.data.code === 200) {
           loadData();
           ElMessage({

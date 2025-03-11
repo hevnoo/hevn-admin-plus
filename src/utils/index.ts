@@ -5,7 +5,7 @@ import { AxiosError } from "axios";
  * @param list
  * @returns 树形结构
  */
-export const arrayToTree = (items: any[], parentKey = "parent_id", idKey = "id") => {
+export const arrayToTree = (items: any[], parentKey = "parent_id", idKey = "id"): any[] => {
   const result: any[] = [];
   const itemMap: { [key: string]: any } = {};
 

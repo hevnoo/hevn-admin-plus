@@ -16,14 +16,14 @@ const emit = defineEmits(["search", "reset"]);
 
 const formData = ref({
   name: "",
-  value: "",
+  code: "",
 });
 
 const formItems = [
   {
     span: 5,
     field: "name",
-    title: "角色名称",
+    title: "部门名称",
     clearable: true,
     itemRender: {
       name: "$input",
@@ -36,8 +36,8 @@ const formItems = [
   },
   {
     span: 5,
-    field: "value",
-    title: "角色值",
+    field: "code",
+    title: "部门编码",
     itemRender: {
       name: "$input",
       props: {

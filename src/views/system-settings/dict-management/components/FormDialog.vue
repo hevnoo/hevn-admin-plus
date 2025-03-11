@@ -36,13 +36,13 @@ const formRef = ref();
 
 // 表单数据
 const initForm = {
-  name: "",
-  value: "",
-  description: "",
-  buttons: [],
-  buttonIds: [],
+  dict_name: "",
+  dict_value: "",
+  language: "zh",
+  order: 0,
+  color: "",
 };
-const formData = ref<FormDataProps>(JSON.parse(JSON.stringify(initForm)));
+const formData = ref<any>(JSON.parse(JSON.stringify(initForm)));
 
 let originalFormData: any = {}; // 记录原始表单数据，用于比较
 
@@ -55,11 +55,11 @@ const showDialog = computed({
 // 对话框标题
 const dialogTitle = computed(() => {
   const titles = {
-    add: "新增角色",
-    edit: "编辑角色",
-    view: "角色详情",
+    add: "新增",
+    edit: "编辑",
+    view: "详情",
   };
-  return titles[props.type] || "角色信息";
+  return titles[props.type] || "信息";
 });
 
 // 监听行数据变化，初始化表单
@@ -73,7 +73,7 @@ watch(
         const data = JSON.parse(JSON.stringify({ ...formData.value, ...newRowData }));
         formData.value = {
           ...data,
-          buttonIds: data.buttons.map((item) => item.id),
+          // dict_type_id: data.dict_type_id,
         };
         originalFormData = JSON.parse(JSON.stringify(formData.value));
       } else if (newType === "add") {
@@ -115,14 +115,16 @@ const handleSubmit = async () => {
 
     // 根据类型执行不同的操作
     if (props.type === "add") {
-      const { name, value, description, buttonIds } = formData.value;
+      const { dict_name, dict_value, language, order, color, dict_type_id } = formData.value;
       const params = {
-        name,
-        value,
-        description,
-        buttons: buttonIds,
+        dict_name,
+        dict_value,
+        language,
+        order: Number(order),
+        color,
+        dict_type_id,
       };
-      const res = await api.create("roles", params);
+      const res = await api.create("dict", params);
       if (res.data.code === 200) {
         ElMessage.success("添加成功");
         // 通知父组件操作成功
@@ -133,15 +135,16 @@ const handleSubmit = async () => {
         ElMessage.error("添加失败");
       }
     } else if (props.type === "edit") {
-      const { id, name, value, description, buttonIds } = formData.value;
+      const { id, dict_name, dict_value, language, order, color } = formData.value;
       let params: any = {
-        name,
-        value,
-        description,
-        buttons: buttonIds,
+        dict_name,
+        dict_value,
+        language,
+        order: Number(order),
+        color,
       };
 
-      const res = await api.update("roles", id, params);
+      const res = await api.update("dict", id, params);
       if (res.data.code === 200) {
         ElMessage.success("更新成功");
         // 通知父组件操作成功

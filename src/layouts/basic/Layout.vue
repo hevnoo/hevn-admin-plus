@@ -8,7 +8,10 @@
   >
     <!-- logo -->
     <template #logo>
-      <LayoutLogo :collapsed="preferences.sidebar.collapsed" :height="preferences.sidebar.logo.height"></LayoutLogo>
+      <LayoutLogo
+        :collapsed="preferences.sidebar.collapsed"
+        :height="preferences.sidebar.logo.height"
+      ></LayoutLogo>
     </template>
     <template #header>
       <!-- 头部内容 -->
@@ -35,7 +38,7 @@
       <LayoutMenu :collapse="preferences.sidebar.collapsed"></LayoutMenu>
     </template>
     <!-- 主要内容 -->
-    <router-view></router-view>
+    <router-view class="main-content g-view-container"></router-view>
   </BaseLayout>
 </template>
 
@@ -79,4 +82,9 @@ const updatePreferences = (payload: any) => {
 };
 </script>
 
-<style scoped lang="scss"></style>
+<style scoped lang="scss">
+.main-content {
+  height: 100%;
+  box-sizing: border-box; /* padding 和 border 将包含在高度内 */
+}
+</style>

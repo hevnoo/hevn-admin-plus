@@ -15,15 +15,15 @@ import { ref } from "vue";
 const emit = defineEmits(["search", "reset"]);
 
 const formData = ref({
-  name: "",
-  value: "",
+  dict_name: "",
+  dict_value: "",
 });
 
 const formItems = [
   {
-    span: 5,
-    field: "name",
-    title: "角色名称",
+    span: 6,
+    field: "dict_name",
+    title: "字典名称",
     clearable: true,
     itemRender: {
       name: "$input",
@@ -35,9 +35,9 @@ const formItems = [
     },
   },
   {
-    span: 5,
-    field: "value",
-    title: "角色值",
+    span: 6,
+    field: "dict_value",
+    title: "字典值",
     itemRender: {
       name: "$input",
       props: {
@@ -48,7 +48,7 @@ const formItems = [
     },
   },
   {
-    span: 14,
+    span: 12,
     align: "right",
     itemRender: {
       name: "$buttons",

@@ -190,6 +190,7 @@ function handleCollapse(collapsed: boolean) {
     flex: 1;
     padding: 16px;
     overflow: auto;
+    background-color: #f6f8f9;
   }
 
   // 页脚

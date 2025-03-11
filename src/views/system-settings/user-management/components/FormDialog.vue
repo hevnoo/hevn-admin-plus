@@ -35,7 +35,7 @@ const emit = defineEmits(["update:showFormDialog", "success"]);
 const formRef = ref();
 
 // 表单数据
-const formData = ref<FormDataProps>({
+const initForm = {
   username: "",
   nickname: "",
   email: "",
@@ -44,7 +44,8 @@ const formData = ref<FormDataProps>({
   roles: [],
   roleIds: [],
   status: true,
-});
+};
+const formData = ref<FormDataProps>(JSON.parse(JSON.stringify(initForm)));
 
 let originalFormData: any = {}; // 记录原始表单数据，用于比较
 
@@ -72,7 +73,7 @@ watch(
     if (newShowDialog) {
       if (newRowData && Object.keys(newRowData).length > 0) {
         // 深拷贝防止直接修改props
-        const data = JSON.parse(JSON.stringify(newRowData));
+        const data = JSON.parse(JSON.stringify({ ...formData.value, ...newRowData }));
         formData.value = {
           ...data,
           roleIds: data.roles.map((item) => item.id),
@@ -98,15 +99,7 @@ const handleClose = () => {
 
 // 重置表单
 const resetForm = () => {
-  formData.value = {
-    username: "",
-    nickname: "",
-    email: "",
-    phone: "",
-    // roles: [],
-    roleIds: [],
-    status: true,
-  };
+  formData.value = JSON.parse(JSON.stringify(initForm));
 
   // 如果表单引用存在，调用其重置方法
   if (formRef.value && formRef.value.resetForm) {

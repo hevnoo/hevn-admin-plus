@@ -18,6 +18,13 @@
   color: #606266 !important;
 }
 
+:global(.g-view-container) {
+  padding: 10px 16px;
+  border: 1px solid #e6e6e6;
+  border-radius: 4px;
+  background-color: #fff;
+}
+
 /**
  * 全局定义 el-dropdown 下拉菜单样式
  * @class g-dropdown

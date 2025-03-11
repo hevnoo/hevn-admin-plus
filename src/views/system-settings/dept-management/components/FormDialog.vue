@@ -5,6 +5,7 @@
     width="600px"
     :draggable="true"
     :close-on-click-modal="false"
+    destroy-on-close
     @close="handleClose"
   >
     <FormUI ref="formRef" :type="type" v-model:formData="formData" @form-change="handleFormChange" />
@@ -37,12 +38,11 @@ const formRef = ref();
 // 表单数据
 const initForm = {
   name: "",
-  value: "",
-  description: "",
-  buttons: [],
-  buttonIds: [],
+  code: "",
+  order: 0,
+  parentId: "", // fk
 };
-const formData = ref<FormDataProps>(JSON.parse(JSON.stringify(initForm)));
+const formData = ref<any>(initForm);
 
 let originalFormData: any = {}; // 记录原始表单数据，用于比较
 
@@ -55,11 +55,11 @@ const showDialog = computed({
 // 对话框标题
 const dialogTitle = computed(() => {
   const titles = {
-    add: "新增角色",
-    edit: "编辑角色",
-    view: "角色详情",
+    add: "新增",
+    edit: "编辑",
+    view: "详情",
   };
-  return titles[props.type] || "角色信息";
+  return titles[props.type] || "信息";
 });
 
 // 监听行数据变化，初始化表单
@@ -73,7 +73,7 @@ watch(
         const data = JSON.parse(JSON.stringify({ ...formData.value, ...newRowData }));
         formData.value = {
           ...data,
-          buttonIds: data.buttons.map((item) => item.id),
+          parentId: data.parent_id,
         };
         originalFormData = JSON.parse(JSON.stringify(formData.value));
       } else if (newType === "add") {
@@ -115,14 +115,14 @@ const handleSubmit = async () => {
 
     // 根据类型执行不同的操作
     if (props.type === "add") {
-      const { name, value, description, buttonIds } = formData.value;
+      const { name, code, order, parentId } = formData.value;
       const params = {
         name,
-        value,
-        description,
-        buttons: buttonIds,
+        code,
+        order,
+        parent_id: parentId || null,
       };
-      const res = await api.create("roles", params);
+      const res = await api.create("department", params);
       if (res.data.code === 200) {
         ElMessage.success("添加成功");
         // 通知父组件操作成功
@@ -133,15 +133,15 @@ const handleSubmit = async () => {
         ElMessage.error("添加失败");
       }
     } else if (props.type === "edit") {
-      const { id, name, value, description, buttonIds } = formData.value;
+      const { id, name, code, order, parentId } = formData.value;
       let params: any = {
         name,
-        value,
-        description,
-        buttons: buttonIds,
+        code,
+        order,
+        parent_id: parentId || null,
       };
 
-      const res = await api.update("roles", id, params);
+      const res = await api.update("department", id, params);
       if (res.data.code === 200) {
         ElMessage.success("更新成功");
         // 通知父组件操作成功

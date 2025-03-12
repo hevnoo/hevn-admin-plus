@@ -129,6 +129,10 @@ const gridOptions = reactive({
   rowConfig: {
     isHover: true,
   },
+  // editConfig: {
+  //   trigger: 'click',
+  //   mode: 'cell'
+  // },
   treeConfig: {
     transform: true,
     rowField: "id",

@@ -163,8 +163,15 @@ const gridOptions = reactive({
   columns: [
     { type: "checkbox", width: 50 },
     { type: "seq", width: 60, align: "left" },
-    { field: "name", title: "部门名称", treeNode: true },
-    { field: "code", title: "部门编码" },
+    { field: "label", title: "菜单名称", treeNode: true },
+    { field: "value", title: "菜单值" },
+    { field: "path", title: "路由路径" },
+    { field: "name", title: "路由名称" },
+    { field: "component", title: "组件路径" },
+    { field: "redirect", title: "重定向" },
+    { field: "hidden", title: "是否隐藏" },
+    { field: "meta", title: "元信息" },
+    { field: "icon", title: "图标" },
     { field: "order", title: "排序" },
     {
       field: "createtime",
@@ -209,11 +216,10 @@ const handleTreeIsExpand = (isExpand?: boolean) => {
 const loadData = async (params: any = {}) => {
   loading.value = true;
   try {
-    const res = await api.getList("department", {
+    const res = await api.getList("menu", {
       where: {
-        name: { contains: params.name },
-        code: { contains: params.code },
-        order: params.order,
+        label: { contains: params.label },
+        value: { contains: params.value },
       },
       orderBy: [{ order: "asc" }, { createtime: "desc" }],
     });
@@ -271,7 +277,7 @@ const handleDelete = async (row) => {
       type: "warning",
     })
       .then(async () => {
-        const res = await api.delete("department", { id: row.id });
+        const res = await api.delete("menu", { id: row.id });
         if (res.data.code === 200) {
           loadData();
           ElMessage({
@@ -299,7 +305,7 @@ const handleBatchDelete = async () => {
     })
       .then(async () => {
         const ids = selectedRows.value.map((row: any) => row.id);
-        const res = await api.delete("department", ids);
+        const res = await api.delete("menu", ids);
         if (res.data.code === 200) {
           loadData();
           ElMessage({

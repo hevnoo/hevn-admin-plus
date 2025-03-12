@@ -10,30 +10,73 @@
     <!-- gutter用于定义栅格列与列的间距 -->
     <el-row :gutter="20">
       <el-col :span="24">
-        <el-form-item label="部门名称" prop="name">
-          <el-input v-model="vFormData.name" placeholder="请输入部门名称" clearable></el-input>
+        <el-form-item label="菜单名称" prop="label">
+          <el-input
+            v-model="vFormData.label"
+            placeholder="请输入菜单名称"
+            clearable
+          ></el-input>
         </el-form-item>
-        <el-form-item label="部门编码" prop="code">
-          <el-input v-model="vFormData.code" placeholder="请输入部门编码" clearable></el-input>
+        <el-form-item label="菜单值" prop="value">
+          <el-input
+            v-model="vFormData.value"
+            placeholder="请输入菜单值"
+            clearable
+          ></el-input>
         </el-form-item>
-        <el-form-item label="排序" prop="order">
-          <el-input v-model="vFormData.order" type="number" placeholder="请输入排序" clearable></el-input>
+        <el-form-item label="路由路径" prop="path">
+          <el-input
+            v-model="vFormData.path"
+            placeholder="请输入路由路径"
+            clearable
+          ></el-input>
         </el-form-item>
-        <el-form-item label="上级部门" prop="parentId">
-          <!-- <el-select v-model="vFormData.parentId" placeholder="请选择上级部门" clearable>
-            <el-option
-              v-for="item in (parentOptions as any[])"
-              :key="item.value"
-              :label="item.label"
-              :value="item.value"
-            ></el-option>
-          </el-select> -->
+        <el-form-item label="路由名称" prop="name">
+          <el-input
+            v-model="vFormData.name"
+            placeholder="请输入路由名称"
+            clearable
+          ></el-input>
+        </el-form-item>
+        <el-form-item label="组件路径" prop="component">
+          <el-input
+            v-model="vFormData.component"
+            placeholder="请输入组件路径"
+            clearable
+          ></el-input>
+        </el-form-item>
+        <el-form-item label="重定向" prop="redirect">
+          <el-input
+            v-model="vFormData.redirect"
+            placeholder="请输入重定向"
+            clearable
+          ></el-input>
+        </el-form-item>
+        <el-form-item label="是否隐藏" prop="hidden">
+          <el-switch v-model="vFormData.hidden" clearable></el-switch>
+        </el-form-item>
+        <el-form-item label="元信息" prop="meta">
+          <el-input
+            v-model="vFormData.meta"
+            placeholder="请输入元信息"
+            clearable
+          ></el-input>
+        </el-form-item>
+        <el-form-item label="图标" prop="icon">
+          <el-input
+            v-model="vFormData.icon"
+            placeholder="请输入图标"
+            clearable
+          ></el-input>
+        </el-form-item>
+
+        <el-form-item label="上级菜单" prop="parentId">
           <el-tree-select
             v-model="vFormData.parentId"
             :data="parentOptions"
             check-strictly
             :render-after-expand="false"
-            placeholder="请输入排序"
+            placeholder="请选择上级菜单"
             clearable
           />
         </el-form-item>
@@ -80,7 +123,11 @@ const formRef = ref();
 
 // 表单验证规则
 const rules = {
-  code: [{ required: true, message: "请输入部门编码", trigger: "blur" }],
+  label: [{ required: true, message: "请输入菜单名称", trigger: "blur" }],
+  value: [{ required: true, message: "请输入菜单值", trigger: "blur" }],
+  path: [{ required: true, message: "请输入路由路径", trigger: "blur" }],
+  name: [{ required: true, message: "请输入路由名称", trigger: "blur" }],
+  component: [{ required: true, message: "请输入组件路径", trigger: "blur" }],
 };
 
 // 格式化日期
@@ -107,12 +154,12 @@ const resetForm = () => {
 
 const parentOptions = ref<any[]>([]);
 const loadParentOptions = async () => {
-  const res = await api.getList("department", {
+  const res = await api.getList("menu", {
     orderBy: [{ order: "asc" }, { createtime: "desc" }],
   });
   const options = res.data.data?.map((item) => ({
     value: item.id,
-    label: item.name,
+    label: item.label,
     id: item.id,
     parent_id: item.parent_id,
   }));

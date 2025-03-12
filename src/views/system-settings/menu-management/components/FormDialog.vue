@@ -8,11 +8,18 @@
     destroy-on-close
     @close="handleClose"
   >
-    <FormUI ref="formRef" :type="type" v-model:formData="formData" @form-change="handleFormChange" />
+    <FormUI
+      ref="formRef"
+      :type="type"
+      v-model:formData="formData"
+      @form-change="handleFormChange"
+    />
 
     <template #footer>
       <el-button @click="handleClose">取消</el-button>
-      <el-button v-if="type !== 'view'" type="primary" @click="handleSubmit">确定</el-button>
+      <el-button v-if="type !== 'view'" type="primary" @click="handleSubmit"
+        >确定</el-button
+      >
     </template>
   </el-dialog>
 </template>
@@ -37,10 +44,16 @@ const formRef = ref();
 
 // 表单数据
 const initForm = {
+  label: "",
+  value: "",
+  path: "",
   name: "",
-  code: "",
+  component: "",
+  redirect: "",
+  hidden: false,
+  meta: "",
+  icon: "",
   order: 0,
-  parentId: "", // fk
 };
 const formData = ref<any>(initForm);
 
@@ -70,7 +83,9 @@ watch(
     if (newShowDialog) {
       if (newRowData && Object.keys(newRowData).length > 0) {
         // 深拷贝防止直接修改props
-        const data = JSON.parse(JSON.stringify({ ...formData.value, ...newRowData }));
+        const data = JSON.parse(
+          JSON.stringify({ ...formData.value, ...newRowData })
+        );
         formData.value = {
           ...data,
           parentId: data.parent_id,
@@ -115,14 +130,33 @@ const handleSubmit = async () => {
 
     // 根据类型执行不同的操作
     if (props.type === "add") {
-      const { name, code, order, parentId } = formData.value;
-      const params = {
+      const {
+        label,
+        value,
+        path,
         name,
-        code,
+        component,
+        redirect,
+        hidden,
+        meta,
+        icon,
+        order,
+        parentId,
+      } = formData.value;
+      const params = {
+        label,
+        value,
+        path,
+        name,
+        component,
+        redirect,
+        hidden,
+        meta,
+        icon,
         order,
         parent_id: parentId || null,
       };
-      const res = await api.create("department", params);
+      const res = await api.create("menu", params);
       if (res.data.code === 200) {
         ElMessage.success("添加成功");
         // 通知父组件操作成功
@@ -133,15 +167,34 @@ const handleSubmit = async () => {
         ElMessage.error("添加失败");
       }
     } else if (props.type === "edit") {
-      const { id, name, code, order, parentId } = formData.value;
-      let params: any = {
+      const {
+        id,
+        label,
+        value,
+        path,
         name,
-        code,
+        component,
+        redirect,
+        hidden,
+        meta,
+        icon,
+        order,
+        parentId,
+      } = formData.value;
+      let params: any = {
+        label,
+        value,
+        path,
+        name,
+        component,
+        redirect,
+        hidden,
+        meta,
+        icon,
         order,
         parent_id: parentId || null,
       };
-
-      const res = await api.update("department", id, params);
+      const res = await api.update("menu", id, params);
       if (res.data.code === 200) {
         ElMessage.success("更新成功");
         // 通知父组件操作成功

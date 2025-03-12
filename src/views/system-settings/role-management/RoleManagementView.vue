@@ -22,7 +22,10 @@
 
       <!-- 操作列 -->
       <template #operation="{ row }">
-        <vxe-button mode="text" status="primary" @click="handleViewDialog(row)">详情</vxe-button>
+        <!-- <vxe-button mode="text" status="primary" @click="handleViewDialog(row)">详情</vxe-button> -->
+        <vxe-button mode="text" status="primary" @click="handleMenuPermissionsDialog(row)"
+          >菜单权限</vxe-button
+        >
         <vxe-button mode="text" status="primary" @click="handleEditDialog(row)">编辑</vxe-button>
         <vxe-button mode="text" status="error" @click="handleDelete(row)">删除</vxe-button>
       </template>
@@ -55,16 +58,23 @@
       :rowData="dialogConfig.data"
       @success="handleDialogSuccess"
     />
+    <MenuPermissionsDialog
+      v-model:showMenuPermissionsDialog="dialogConfig.menuPermissionsConfig.show"
+      :rowData="dialogConfig.menuPermissionsConfig.data"
+      :menuOptions="dialogConfig.menuPermissionsConfig.menuOptions"
+      @success="handleDialogSuccess"
+    />
   </div>
 </template>
 
 <script setup lang="ts">
 import { ref, reactive } from "vue";
 import { api } from "@/api";
-import { SearchForm, FormDialog } from "./components";
+import { SearchForm, FormDialog, MenuPermissionsDialog } from "./components";
 import type { VxeGridInstance } from "vxe-table";
 import { ElMessage, ElMessageBox } from "element-plus";
 import dayjs from "dayjs";
+import { arrayToTree } from "@/utils";
 
 const xGrid = ref<VxeGridInstance>();
 const loading = ref(false);
@@ -76,6 +86,11 @@ const dialogConfig = reactive<any>({
   show: false,
   type: "", // add, edit, view
   data: null,
+  menuPermissionsConfig: {
+    show: false,
+    data: null,
+    menuOptions: [],
+  },
 });
 const cellRenders = {
   statusCellRender: reactive<any>({
@@ -174,6 +189,15 @@ const gridEvents = {
   "checkbox-all": handleSelectionChange,
 };
 
+const loadMenuOptions = async () => {
+  const res = await api.getList("menu", {
+    orderBy: [{ order: "asc" }, { createtime: "desc" }],
+  });
+  dialogConfig.menuPermissionsConfig.menuOptions = Array.isArray(res.data.data)
+    ? arrayToTree(res.data.data)
+    : [];
+};
+
 // 加载数据
 const loadData = async (params: any = {}) => {
   loading.value = true;
@@ -194,6 +218,9 @@ const loadData = async (params: any = {}) => {
     if (xGrid.value) {
       gridOptions.pagerConfig.total = res.data.total || 0;
     }
+
+    // 加载菜单选项
+    loadMenuOptions();
   } catch (err) {
     console.error(err);
   } finally {
@@ -236,6 +263,12 @@ const handleViewDialog = (row) => {
   dialogConfig.type = "view";
   dialogConfig.data = row;
   dialogConfig.show = true;
+};
+
+// 菜单权限
+const handleMenuPermissionsDialog = (row) => {
+  dialogConfig.menuPermissionsConfig.data = row;
+  dialogConfig.menuPermissionsConfig.show = true;
 };
 
 // 删除

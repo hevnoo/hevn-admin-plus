@@ -25,17 +25,15 @@ export const auth = defineStore("/auth", {
         Cookies.set("token", res.data.token);
         localStorage.setItem("token", res.data.token);
         this.userInfo = res.data.userInfo;
-        localStorage.setItem(
-          "userInfo",
-          JSON.stringify(res.data.userInfo || "{}")
-        );
+        localStorage.setItem("userInfo", JSON.stringify(res.data.userInfo || "{}"));
 
         // 获取菜单数据
         const menuRes = await api.getList("menu", {
           where: {
             roles: {
               some: {
-                value: { in: this.userInfo?.roles?.map((role) => role.value) },
+                // value: { in: this.userInfo?.roles?.map((role) => role.value) },
+                id: { in: this.userInfo?.roles?.map((role) => role.id) },
               },
             },
           },

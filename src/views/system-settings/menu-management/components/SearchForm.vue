@@ -23,7 +23,7 @@ const formItems = [
   {
     span: 5,
     field: "label",
-    title: "菜单名称",
+    title: "菜单标题",
     clearable: true,
     itemRender: {
       name: "$input",
@@ -36,8 +36,8 @@ const formItems = [
   },
   {
     span: 5,
-    field: "value",
-    title: "菜单值",
+    field: "name",
+    title: "路由名称",
     itemRender: {
       name: "$input",
       props: {

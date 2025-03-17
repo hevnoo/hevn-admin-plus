@@ -163,16 +163,15 @@ const gridOptions = reactive({
   columns: [
     { type: "checkbox", width: 50 },
     { type: "seq", width: 60, align: "left" },
-    { field: "label", title: "菜单名称", treeNode: true },
-    { field: "value", title: "菜单值" },
-    { field: "path", title: "路由路径" },
+    { field: "label", title: "菜单标题", treeNode: true },
     { field: "name", title: "路由名称" },
+    { field: "path", title: "路由路径" },
     { field: "component", title: "组件路径" },
     { field: "redirect", title: "重定向" },
     { field: "hidden", title: "是否隐藏" },
-    { field: "meta", title: "元信息" },
+    // { field: "meta", title: "元信息" },
     { field: "icon", title: "图标" },
-    { field: "order", title: "排序" },
+    { field: "order", title: "排序", width: 70 },
     {
       field: "createtime",
       title: "创建时间",
@@ -219,7 +218,7 @@ const loadData = async (params: any = {}) => {
     const res = await api.getList("menu", {
       where: {
         label: { contains: params.label },
-        value: { contains: params.value },
+        name: { contains: params.name },
       },
       orderBy: [{ order: "asc" }, { createtime: "desc" }],
     });

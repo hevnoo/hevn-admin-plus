@@ -2,24 +2,17 @@
   <el-dialog
     :title="dialogTitle"
     v-model="showDialog"
-    width="600px"
+    width="800px"
     :draggable="true"
     :close-on-click-modal="false"
     destroy-on-close
     @close="handleClose"
   >
-    <FormUI
-      ref="formRef"
-      :type="type"
-      v-model:formData="formData"
-      @form-change="handleFormChange"
-    />
+    <FormUI ref="formRef" :type="type" v-model:formData="formData" @form-change="handleFormChange" />
 
     <template #footer>
       <el-button @click="handleClose">取消</el-button>
-      <el-button v-if="type !== 'view'" type="primary" @click="handleSubmit"
-        >确定</el-button
-      >
+      <el-button v-if="type !== 'view'" type="primary" @click="handleSubmit">确定</el-button>
     </template>
   </el-dialog>
 </template>
@@ -46,9 +39,9 @@ const formRef = ref();
 const initForm = {
   label: "",
   value: "",
-  path: "",
   name: "",
-  component: "",
+  path: "/",
+  component: "/",
   redirect: "",
   hidden: false,
   meta: "",
@@ -83,11 +76,10 @@ watch(
     if (newShowDialog) {
       if (newRowData && Object.keys(newRowData).length > 0) {
         // 深拷贝防止直接修改props
-        const data = JSON.parse(
-          JSON.stringify({ ...formData.value, ...newRowData })
-        );
+        const data = JSON.parse(JSON.stringify({ ...formData.value, ...newRowData }));
         formData.value = {
           ...data,
+          meta: JSON.stringify(data.meta),
           parentId: data.parent_id,
         };
         originalFormData = JSON.parse(JSON.stringify(formData.value));
@@ -119,6 +111,16 @@ const resetForm = () => {
   }
 };
 
+// 验证JSON
+const validateJson = (value: string) => {
+  try {
+    JSON.parse(value);
+    return true;
+  } catch (e) {
+    return false;
+  }
+};
+
 // 提交表单
 const handleSubmit = async () => {
   if (!formRef.value) return;
@@ -130,28 +132,15 @@ const handleSubmit = async () => {
 
     // 根据类型执行不同的操作
     if (props.type === "add") {
-      const {
-        label,
-        value,
-        path,
-        name,
-        component,
-        redirect,
-        hidden,
-        meta,
-        icon,
-        order,
-        parentId,
-      } = formData.value;
+      const { label, path, name, component, redirect, hidden, meta, icon, order, parentId } = formData.value;
       const params = {
         label,
-        value,
         path,
         name,
         component,
         redirect,
         hidden,
-        meta,
+        meta: validateJson(meta) ? JSON.parse(meta) : meta,
         icon,
         order,
         parent_id: parentId || null,
@@ -167,29 +156,16 @@ const handleSubmit = async () => {
         ElMessage.error("添加失败");
       }
     } else if (props.type === "edit") {
-      const {
-        id,
-        label,
-        value,
-        path,
-        name,
-        component,
-        redirect,
-        hidden,
-        meta,
-        icon,
-        order,
-        parentId,
-      } = formData.value;
+      const { id, label, path, name, component, redirect, hidden, meta, icon, order, parentId } =
+        formData.value;
       let params: any = {
         label,
-        value,
         path,
         name,
         component,
         redirect,
         hidden,
-        meta,
+        meta: validateJson(meta) ? JSON.parse(meta) : meta,
         icon,
         order,
         parent_id: parentId || null,

@@ -9,67 +9,7 @@
   >
     <!-- gutter用于定义栅格列与列的间距 -->
     <el-row :gutter="20">
-      <el-col :span="24">
-        <el-form-item label="菜单名称" prop="label">
-          <el-input
-            v-model="vFormData.label"
-            placeholder="请输入菜单名称"
-            clearable
-          ></el-input>
-        </el-form-item>
-        <el-form-item label="菜单值" prop="value">
-          <el-input
-            v-model="vFormData.value"
-            placeholder="请输入菜单值"
-            clearable
-          ></el-input>
-        </el-form-item>
-        <el-form-item label="路由路径" prop="path">
-          <el-input
-            v-model="vFormData.path"
-            placeholder="请输入路由路径"
-            clearable
-          ></el-input>
-        </el-form-item>
-        <el-form-item label="路由名称" prop="name">
-          <el-input
-            v-model="vFormData.name"
-            placeholder="请输入路由名称"
-            clearable
-          ></el-input>
-        </el-form-item>
-        <el-form-item label="组件路径" prop="component">
-          <el-input
-            v-model="vFormData.component"
-            placeholder="请输入组件路径"
-            clearable
-          ></el-input>
-        </el-form-item>
-        <el-form-item label="重定向" prop="redirect">
-          <el-input
-            v-model="vFormData.redirect"
-            placeholder="请输入重定向"
-            clearable
-          ></el-input>
-        </el-form-item>
-        <el-form-item label="是否隐藏" prop="hidden">
-          <el-switch v-model="vFormData.hidden" clearable></el-switch>
-        </el-form-item>
-        <el-form-item label="元信息" prop="meta">
-          <el-input
-            v-model="vFormData.meta"
-            placeholder="请输入元信息"
-            clearable
-          ></el-input>
-        </el-form-item>
-        <el-form-item label="图标" prop="icon">
-          <el-input
-            v-model="vFormData.icon"
-            placeholder="请输入图标"
-            clearable
-          ></el-input>
-        </el-form-item>
-
+      <el-col :span="12">
         <el-form-item label="上级菜单" prop="parentId">
           <el-tree-select
             v-model="vFormData.parentId"
@@ -80,22 +20,35 @@
             clearable
           />
         </el-form-item>
+        <el-form-item label="路由名称" prop="name">
+          <el-input v-model="vFormData.name" placeholder="请输入路由名称" clearable></el-input>
+        </el-form-item>
+        <el-form-item label="组件路径" prop="component">
+          <el-input v-model="vFormData.component" placeholder="请输入组件路径" clearable></el-input>
+        </el-form-item>
+        <el-form-item label="是否隐藏" prop="hidden">
+          <el-switch v-model="vFormData.hidden" clearable></el-switch>
+        </el-form-item>
+      </el-col>
+      <el-col :span="12">
+        <el-form-item label="菜单名称" prop="label">
+          <el-input v-model="vFormData.label" placeholder="请输入菜单名称" clearable></el-input>
+        </el-form-item>
+        <el-form-item label="路由路径" prop="path">
+          <el-input v-model="vFormData.path" placeholder="请输入路由路径" clearable></el-input>
+        </el-form-item>
+        <el-form-item label="重定向" prop="redirect">
+          <el-input v-model="vFormData.redirect" placeholder="请输入重定向" clearable></el-input>
+        </el-form-item>
+        <el-form-item label="图标" prop="icon">
+          <el-input v-model="vFormData.icon" placeholder="请输入图标" clearable></el-input>
+        </el-form-item>
       </el-col>
     </el-row>
 
-    <!-- 仅在编辑模式显示的字段 -->
-    <template v-if="type === 'edit'">
-      <el-form-item label="更新时间">
-        <span>{{ formatDate(vFormData.updatetime) }}</span>
-      </el-form-item>
-    </template>
-
-    <!-- 仅在查看模式显示的字段 -->
-    <template v-if="type === 'view'">
-      <el-form-item label="创建时间">
-        <span>{{ formatDate(vFormData.createtime) }}</span>
-      </el-form-item>
-    </template>
+    <el-form-item label="元信息" prop="meta">
+      <el-input v-model="vFormData.meta" type="textarea" placeholder="请输入元信息" clearable></el-input>
+    </el-form-item>
   </el-form>
 </template>
 
@@ -124,12 +77,37 @@ const formRef = ref();
 // 表单验证规则
 const rules = {
   label: [{ required: true, message: "请输入菜单名称", trigger: "blur" }],
-  value: [{ required: true, message: "请输入菜单值", trigger: "blur" }],
   path: [{ required: true, message: "请输入路由路径", trigger: "blur" }],
   name: [{ required: true, message: "请输入路由名称", trigger: "blur" }],
   component: [{ required: true, message: "请输入组件路径", trigger: "blur" }],
+  meta: [
+    {
+      validator: (rule: any, value: string, callback: any) => {
+        if (!value) {
+          callback();
+          return;
+        }
+        try {
+          JSON.parse(value);
+          callback();
+        } catch (e) {
+          callback(new Error("请输入有效的 JSON 格式"));
+        }
+      },
+      trigger: "blur",
+    },
+  ],
 };
 
+// 格式化 JSON
+const formatJson = (value: string) => {
+  try {
+    const obj = JSON.parse(value);
+    return JSON.stringify(obj, null, 2);
+  } catch (e) {
+    return value;
+  }
+};
 // 格式化日期
 const formatDate = (date) => {
   if (!date) return "--";
@@ -155,6 +133,11 @@ const resetForm = () => {
 const parentOptions = ref<any[]>([]);
 const loadParentOptions = async () => {
   const res = await api.getList("menu", {
+    where: {
+      id: {
+        not: vFormData.value.id,
+      },
+    },
     orderBy: [{ order: "asc" }, { createtime: "desc" }],
   });
   const options = res.data.data?.map((item) => ({

@@ -17,7 +17,12 @@
           <el-input v-model="vFormData.value" placeholder="请输入字典类型值" clearable></el-input>
         </el-form-item>
         <el-form-item label="排序" prop="order">
-          <el-input v-model="vFormData.order" type="number" placeholder="请输入排序" clearable></el-input>
+          <el-input-number
+            v-model="vFormData.order"
+            :min="0"
+            :controls="true"
+            placeholder="请输入排序"
+          ></el-input-number>
         </el-form-item>
         <el-form-item label="上级字典类型" prop="parentId">
           <el-select v-model="vFormData.parentId" placeholder="请选择上级字典类型" clearable>

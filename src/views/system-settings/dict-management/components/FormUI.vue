@@ -28,7 +28,12 @@
         </el-form-item>
 
         <el-form-item label="排序" prop="order">
-          <el-input v-model="vFormData.order" type="number" placeholder="请输入排序"></el-input>
+          <el-input-number
+            v-model="vFormData.order"
+            :min="0"
+            :controls="true"
+            placeholder="请输入排序"
+          ></el-input-number>
         </el-form-item>
         <el-form-item label="颜色" prop="color">
           <el-input v-model="vFormData.color" placeholder="请输入颜色"></el-input>

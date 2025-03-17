@@ -7,3 +7,4 @@ export { default as BaseTable } from "./base-table/BaseTable.vue";
 export { default as BaseUpload } from "./base-upload/BaseUpload.vue";
 export { default as ChunkUploader } from "./base-upload/ChunkUploader.vue";
 export { default as BaseImage } from "./base-image/BaseImage.vue";
+export { default as BaseMapView } from "./base-map-view/BaseMapView.vue";

@@ -26,6 +26,9 @@
         <el-form-item label="组件路径" prop="component">
           <el-input v-model="vFormData.component" placeholder="请输入组件路径" clearable></el-input>
         </el-form-item>
+        <el-form-item label="图标" prop="icon">
+          <el-input v-model="vFormData.icon" placeholder="请输入图标" clearable></el-input>
+        </el-form-item>
         <el-form-item label="是否隐藏" prop="hidden">
           <el-switch v-model="vFormData.hidden" clearable></el-switch>
         </el-form-item>
@@ -40,8 +43,16 @@
         <el-form-item label="重定向" prop="redirect">
           <el-input v-model="vFormData.redirect" placeholder="请输入重定向" clearable></el-input>
         </el-form-item>
-        <el-form-item label="图标" prop="icon">
-          <el-input v-model="vFormData.icon" placeholder="请输入图标" clearable></el-input>
+        <!-- <el-form-item label="排序" prop="order">
+          <el-input v-model="vFormData.order" type="number" placeholder="请输入排序" clearable></el-input>
+        </el-form-item> -->
+        <el-form-item label="排序" prop="order">
+          <el-input-number
+            v-model="vFormData.order"
+            :min="0"
+            :controls="true"
+            placeholder="请输入排序"
+          ></el-input-number>
         </el-form-item>
       </el-col>
     </el-row>

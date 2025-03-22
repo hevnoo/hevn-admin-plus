@@ -7,10 +7,18 @@ import { addDynamicRoutes } from "@/router"; // 引入动态路由
 
 export const auth = defineStore("/auth", {
   state: () => ({
-    token: Cookies.get("token") || localStorage.getItem("token"),
-    userInfo: JSON.parse(localStorage.getItem("userInfo") || "{}"),
-    menu: JSON.parse(localStorage.getItem("menu") || "[]"),
+    token: "",
+    userInfo: {},
+    menu: [],
   }),
+  // 启用所有store持久化
+  // persist: true,
+  // 启用自定义持久化
+  persist: {
+    key: "auth",
+    storage: localStorage,
+    paths: ["token", "userInfo", "menu"],
+  },
   getters: {},
   actions: {
     //登录
@@ -25,7 +33,10 @@ export const auth = defineStore("/auth", {
         Cookies.set("token", res.data.token);
         localStorage.setItem("token", res.data.token);
         this.userInfo = res.data.userInfo;
-        localStorage.setItem("userInfo", JSON.stringify(res.data.userInfo || "{}"));
+        localStorage.setItem(
+          "userInfo",
+          JSON.stringify(res.data.userInfo || "{}")
+        );
 
         // 获取菜单数据
         const menuRes = await api.getList("menu", {

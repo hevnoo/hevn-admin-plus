@@ -2,8 +2,10 @@
 import { createApp } from "vue";
 // import "./style.css";
 import App from "./App.vue";
-//pinia
+// pinia
 import { createPinia } from "pinia";
+// pinia持久化
+import piniaPluginPersistedstate from "pinia-plugin-persistedstate";
 //router
 import router from "./router";
 //路由守卫
@@ -11,16 +13,16 @@ import "@/router/guard";
 // 动态路由
 import { auth } from "@/store";
 import { addDynamicRoutes } from "@/router";
-//element
+// element
 import ElementPlus from "element-plus";
 import "element-plus/dist/index.css";
-//国际化element
+// 国际化element
 import zhCn from "element-plus/dist/locale/zh-cn.mjs";
-//注册element-icon
+// 注册element-icon
 import * as ElementPlusIconsVue from "@element-plus/icons-vue";
-//styles
+// styles
 import "@/styles/index.scss";
-//vxeTable
+// vxeTable
 import VxeUI from "vxe-pc-ui";
 import "vxe-pc-ui/lib/style.css";
 import VxeTable from "vxe-table";
@@ -31,6 +33,8 @@ import en from "./locales/en.json";
 import zh from "./locales/zh.json";
 
 const pinia = createPinia();
+// pinia持久化
+pinia.use(piniaPluginPersistedstate);
 
 const localeLanguage = localStorage.getItem("language") || "zh";
 const i18n = createI18n({

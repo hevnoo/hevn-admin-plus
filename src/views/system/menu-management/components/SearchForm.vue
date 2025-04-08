@@ -15,14 +15,14 @@ import { ref } from "vue";
 const emit = defineEmits(["search", "reset"]);
 
 const formData = ref({
-  label: "",
+  title: "",
   value: "",
 });
 
 const formItems = [
   {
     span: 5,
-    field: "label",
+    field: "title",
     title: "菜单标题",
     clearable: true,
     itemRender: {
@@ -37,7 +37,7 @@ const formItems = [
   {
     span: 5,
     field: "name",
-    title: "路由名称",
+    title: "路由名称标识",
     itemRender: {
       name: "$input",
       props: {

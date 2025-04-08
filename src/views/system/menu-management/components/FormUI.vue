@@ -16,12 +16,13 @@
             :data="parentOptions"
             check-strictly
             :render-after-expand="false"
+            highlight-current
             placeholder="请选择上级菜单"
             clearable
           />
         </el-form-item>
-        <el-form-item label="路由名称" prop="name">
-          <el-input v-model="vFormData.name" placeholder="请输入路由名称" clearable></el-input>
+        <el-form-item label="路由名称标识" prop="name">
+          <el-input v-model="vFormData.name" placeholder="请输入路由名称标识" clearable></el-input>
         </el-form-item>
         <el-form-item label="组件路径" prop="component">
           <el-input v-model="vFormData.component" placeholder="请输入组件路径" clearable></el-input>
@@ -34,8 +35,8 @@
         </el-form-item>
       </el-col>
       <el-col :span="12">
-        <el-form-item label="菜单名称" prop="label">
-          <el-input v-model="vFormData.label" placeholder="请输入菜单名称" clearable></el-input>
+        <el-form-item label="菜单标题" prop="title">
+          <el-input v-model="vFormData.title" placeholder="请输入菜单标题" clearable></el-input>
         </el-form-item>
         <el-form-item label="路由路径" prop="path">
           <el-input v-model="vFormData.path" placeholder="请输入路由路径" clearable></el-input>
@@ -87,7 +88,7 @@ const formRef = ref();
 
 // 表单验证规则
 const rules = {
-  label: [{ required: true, message: "请输入菜单名称", trigger: "blur" }],
+  title: [{ required: true, message: "请输入菜单名称", trigger: "blur" }],
   path: [{ required: true, message: "请输入路由路径", trigger: "blur" }],
   name: [{ required: true, message: "请输入路由名称", trigger: "blur" }],
   component: [{ required: true, message: "请输入组件路径", trigger: "blur" }],
@@ -153,7 +154,7 @@ const loadParentOptions = async () => {
   });
   const options = res.data.data?.map((item) => ({
     value: item.id,
-    label: item.label,
+    label: item.title,
     id: item.id,
     parent_id: item.parent_id,
   }));

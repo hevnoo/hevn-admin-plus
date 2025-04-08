@@ -5,7 +5,8 @@ import { AxiosError } from "axios";
  * @param list
  * @returns 树形结构
  */
-export const arrayToTree = (items: any[], parentKey = "parent_id", idKey = "id"): any[] => {
+export const arrayToTree = (items: any[], parentKey: string = "parent_id"): any[] => {
+  const idKey = "id";
   const result: any[] = [];
   const itemMap: { [key: string]: any } = {};
 
@@ -23,6 +24,50 @@ export const arrayToTree = (items: any[], parentKey = "parent_id", idKey = "id")
     } else {
       // 如果没有父节点，则为顶层节点
       result.push(itemMap[item[idKey]]);
+    }
+  });
+
+  return result;
+};
+
+/**
+ * 引用的方式转成treeOptions
+ * @param list
+ * @returns 树形结构
+ */
+export const arrayToTreeOptions = (
+  items: any[],
+  parentKey: string = "parent_id",
+  { valueKey = "id", labelKey = "name" }: { valueKey: string; labelKey: string }
+): any[] => {
+  const idKey = "id";
+  const result: any[] = [];
+  const itemMap: { [key: string]: any } = {};
+
+  // 首先将所有项目映射到一个对象中
+  items.forEach((item) => {
+    itemMap[item[idKey]] = { ...item, children: [] };
+  });
+
+  // 构建树形结构
+  items.forEach((item) => {
+    const parentId = item[parentKey];
+    if (parentId && itemMap[parentId]) {
+      // 如果有父节点，将当前项添加到父节点的children中
+      itemMap[parentId].children.push({
+        value: itemMap[item[idKey]][valueKey],
+        label: itemMap[item[idKey]][labelKey],
+        id: itemMap[item[idKey]][idKey],
+        children: itemMap[item[idKey]].children,
+      });
+    } else {
+      // 如果没有父节点，则为顶层节点
+      result.push({
+        value: itemMap[item[idKey]][valueKey],
+        label: itemMap[item[idKey]][labelKey],
+        id: itemMap[item[idKey]][idKey],
+        children: itemMap[item[idKey]].children,
+      });
     }
   });
 

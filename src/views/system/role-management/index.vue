@@ -14,7 +14,7 @@
     >
       <!-- 工具栏 -->
       <template #toolbar_buttons>
-        <vxe-button status="primary" @click="handleAddDialog">新增用户</vxe-button>
+        <vxe-button status="primary" @click="handleAddDialog">新增角色</vxe-button>
         <vxe-button status="danger" :disabled="!selectedRows.length" @click="handleBatchDelete"
           >批量删除</vxe-button
         >
@@ -22,20 +22,32 @@
 
       <!-- 操作列 -->
       <template #operation="{ row }">
-        <vxe-button mode="text" status="primary" @click="handleViewDialog(row)">详情</vxe-button>
+        <!-- <vxe-button mode="text" status="primary" @click="handleViewDialog(row)">详情</vxe-button> -->
+        <vxe-button mode="text" status="primary" @click="handleMenuPermissionsDialog(row)"
+          >菜单权限</vxe-button
+        >
         <vxe-button mode="text" status="primary" @click="handleEditDialog(row)">编辑</vxe-button>
         <vxe-button mode="text" status="error" @click="handleDelete(row)">删除</vxe-button>
       </template>
 
       <!-- column -->
-      <template #roles="{ row }">
-        <span style="color: #67c23a">
-          <!-- white-space: pre-line -->
-          {{ row.roles.map((role) => role.name).join(",\n") }}
-        </span>
-      </template>
-      <template #avatar="{ row }">
-        <BaseImage :url="SERVER_URL + row.avatar" :srcList="[`${SERVER_URL}${row.avatar}`]" :align="'left'" />
+      <template #buttons="{ row }">
+        <el-tag
+          v-for="button in row.buttons"
+          :key="button.id"
+          :type="
+            button.value === 'add'
+              ? 'success'
+              : button.value === 'edit'
+              ? 'warning'
+              : button.value === 'delete'
+              ? 'danger'
+              : 'primary'
+          "
+          size="large"
+          style="margin-right: 10px"
+          >{{ button.name }}</el-tag
+        >
       </template>
     </vxe-grid>
 
@@ -46,18 +58,23 @@
       :rowData="dialogConfig.data"
       @success="handleDialogSuccess"
     />
+    <MenuPermissionsDialog
+      v-model:showMenuPermissionsDialog="dialogConfig.menuPermissionsConfig.show"
+      :rowData="dialogConfig.menuPermissionsConfig.data"
+      :menuOptions="dialogConfig.menuPermissionsConfig.menuOptions"
+      @success="handleDialogSuccess"
+    />
   </div>
 </template>
 
 <script setup lang="ts">
 import { ref, reactive } from "vue";
 import { api } from "@/api";
-import { SearchForm, FormDialog } from "./components";
-import { BaseImage } from "@/components/basic";
+import { SearchForm, FormDialog, MenuPermissionsDialog } from "./components";
 import type { VxeGridInstance } from "vxe-table";
 import { ElMessage, ElMessageBox } from "element-plus";
 import dayjs from "dayjs";
-import { SERVER_URL } from "@/config";
+import { arrayToTree } from "@/utils";
 
 const xGrid = ref<VxeGridInstance>();
 const loading = ref(false);
@@ -69,20 +86,13 @@ const dialogConfig = reactive<any>({
   show: false,
   type: "", // add, edit, view
   data: null,
+  menuPermissionsConfig: {
+    show: false,
+    data: null,
+    menuOptions: [],
+  },
 });
 const cellRenders = {
-  // avatarUrlCellRender: reactive<any>({
-  //   name: "VxeImage",
-  //   props: {
-  //     // circle: true,
-  //     width: 36,
-  //     height: 36,
-  //     fit: "cover",
-  //     src: ({ row }) => {
-  //       return SERVER_URL + row.avatar;
-  //     },
-  //   },
-  // }),
   statusCellRender: reactive<any>({
     name: "VxeSwitch",
     props: {
@@ -133,6 +143,7 @@ const gridOptions = reactive({
     currentPage: 1,
     pageSize: 10,
     pageSizes: [10, 20, 50, 100],
+    size: "small",
     // layouts: ['PrevPage', 'JumpNumber', 'NextPage', 'FullJump', 'Sizes', 'Total']
   },
   toolbarConfig: {
@@ -147,26 +158,13 @@ const gridOptions = reactive({
   columns: [
     { type: "checkbox", width: 50 },
     { type: "seq", width: 60, align: "left" },
-    { field: "username", title: "用户名" },
-    { field: "nickname", title: "昵称" },
-    { field: "email", title: "邮箱" },
-    { field: "phone", title: "手机号" },
+    { field: "name", title: "角色名称" },
+    { field: "value", title: "角色值" },
+    { field: "description", title: "描述" },
     {
-      field: "avatar",
-      title: "头像",
-      // cellRender: cellRenders.avatarUrlCellRender,
-      slots: { default: "avatar" },
-    },
-    {
-      field: "roles",
-      title: "角色",
-      slots: { default: "roles" },
-    },
-    {
-      field: "status",
-      title: "状态",
-      width: 100,
-      cellRender: cellRenders.statusCellRender,
+      field: "buttons",
+      title: "按钮",
+      slots: { default: "buttons" },
     },
     {
       field: "createtime",
@@ -192,19 +190,27 @@ const gridEvents = {
   "checkbox-all": handleSelectionChange,
 };
 
+const loadMenuOptions = async () => {
+  const res = await api.getList("menu", {
+    orderBy: [{ order: "asc" }, { createtime: "desc" }],
+  });
+  dialogConfig.menuPermissionsConfig.menuOptions = Array.isArray(res.data.data)
+    ? arrayToTree(res.data.data)
+    : [];
+};
+
 // 加载数据
 const loadData = async (params: any = {}) => {
   loading.value = true;
   try {
-    const res = await api.getList("users", {
+    const res = await api.getList("roles", {
       where: {
-        username: { contains: params.username },
-        email: { contains: params.email },
-        status: params.status,
+        name: { contains: params.name },
+        value: { contains: params.value },
       },
       page: params.page || gridOptions.pagerConfig.currentPage,
       pageSize: params.pageSize || gridOptions.pagerConfig.pageSize,
-      include: ["roles"],
+      include: ["buttons"],
     });
 
     tableData.value = Array.isArray(res.data.data) ? res.data.data : [];
@@ -213,6 +219,9 @@ const loadData = async (params: any = {}) => {
     if (xGrid.value) {
       gridOptions.pagerConfig.total = res.data.total || 0;
     }
+
+    // 加载菜单选项
+    loadMenuOptions();
   } catch (err) {
     console.error(err);
   } finally {
@@ -257,6 +266,12 @@ const handleViewDialog = (row) => {
   dialogConfig.show = true;
 };
 
+// 菜单权限
+const handleMenuPermissionsDialog = (row) => {
+  dialogConfig.menuPermissionsConfig.data = row;
+  dialogConfig.menuPermissionsConfig.show = true;
+};
+
 // 删除
 const handleDelete = async (row) => {
   try {
@@ -266,7 +281,7 @@ const handleDelete = async (row) => {
       type: "warning",
     })
       .then(async () => {
-        const res = await api.delete("users", { id: row.id });
+        const res = await api.delete("roles", { id: row.id });
         if (res.data.code === 200) {
           loadData();
           ElMessage({
@@ -294,7 +309,7 @@ const handleBatchDelete = async () => {
     })
       .then(async () => {
         const ids = selectedRows.value.map((row: any) => row.id);
-        const res = await api.delete("users", ids);
+        const res = await api.delete("roles", ids);
         if (res.data.code === 200) {
           loadData();
           ElMessage({

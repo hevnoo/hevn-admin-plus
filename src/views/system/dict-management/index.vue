@@ -1,82 +1,72 @@
 <template>
-  <div class="dept-container">
-    <!-- 搜索表单组件 -->
-    <SearchForm ref="searchFormRef" @search="handleSearch" @reset="handleReset" />
+  <div class="g-view-container-default dict-container">
+    <!-- 左侧字典分类 -->
+    <CategorySplitPane class="sidebar" @current-change="handleCurrentChange" />
 
-    <!-- 表格部分 -->
-    <vxe-grid ref="xGrid" v-bind="gridOptions" v-on="gridEvents" :data="tableData" :loading="loading">
-      <!-- 工具栏 -->
-      <template #toolbar_buttons>
-        <vxe-button status="primary" @click="handleAddDialog">新增菜单</vxe-button>
-        <vxe-button status="danger" :disabled="!selectedRows.length" @click="handleBatchDelete"
-          >批量删除</vxe-button
-        >
-      </template>
-      <template #toolbar_tools>
-        <vxe-button
-          v-if="expandStatus"
-          circle
-          style="margin-right: 0.72em"
-          @click="handleTreeIsExpand(false)"
-        >
-          <el-icon :size="16">
-            <Sort />
-          </el-icon>
-        </vxe-button>
-        <vxe-button
-          v-if="!expandStatus"
-          circle
-          style="margin-right: 0.72em"
-          @click="handleTreeIsExpand(true)"
-        >
-          <el-icon :size="16">
-            <Sort />
-          </el-icon>
-        </vxe-button>
-      </template>
+    <div class="content">
+      <!-- 搜索表单组件 -->
+      <SearchForm ref="searchFormRef" @search="handleSearch" @reset="handleReset" />
 
-      <!-- 操作列 -->
-      <template #operation="{ row }">
-        <vxe-button mode="text" status="primary" @click="handleViewDialog(row)">详情</vxe-button>
-        <vxe-button mode="text" status="primary" @click="handleEditDialog(row)">编辑</vxe-button>
-        <vxe-button mode="text" status="error" @click="handleDelete(row)">删除</vxe-button>
-      </template>
+      <!-- 表格部分 -->
+      <vxe-grid
+        ref="xGrid"
+        v-bind="gridOptions"
+        v-on="gridEvents"
+        :data="tableData"
+        :loading="loading"
+        @page-change="handlePageChange"
+      >
+        <!-- 工具栏 -->
+        <template #toolbar_buttons>
+          <vxe-button status="primary" @click="handleAddDialog">新增</vxe-button>
+          <vxe-button status="danger" :disabled="!selectedRows.length" @click="handleBatchDelete"
+            >批量删除</vxe-button
+          >
+        </template>
 
-      <!-- column -->
-      <template #buttons="{ row }">
-        <el-tag
-          v-for="button in row.buttons"
-          :key="button.id"
-          :type="
-            button.value === 'add'
-              ? 'success'
-              : button.value === 'edit'
-              ? 'warning'
-              : button.value === 'delete'
-              ? 'danger'
-              : 'primary'
-          "
-          size="large"
-          style="margin-right: 10px"
-          >{{ button.name }}</el-tag
-        >
-      </template>
-    </vxe-grid>
+        <!-- 操作列 -->
+        <template #operation="{ row }">
+          <vxe-button mode="text" status="primary" @click="handleViewDialog(row)">详情</vxe-button>
+          <vxe-button mode="text" status="primary" @click="handleEditDialog(row)">编辑</vxe-button>
+          <vxe-button mode="text" status="error" @click="handleDelete(row)">删除</vxe-button>
+        </template>
 
-    <!-- 弹窗容器 -->
-    <FormDialog
-      v-model:showFormDialog="dialogConfig.show"
-      :type="dialogConfig.type"
-      :rowData="dialogConfig.data"
-      @success="handleDialogSuccess"
-    />
+        <!-- column -->
+        <template #buttons="{ row }">
+          <el-tag
+            v-for="button in row.buttons"
+            :key="button.id"
+            :type="
+              button.value === 'add'
+                ? 'success'
+                : button.value === 'edit'
+                ? 'warning'
+                : button.value === 'delete'
+                ? 'danger'
+                : 'primary'
+            "
+            size="large"
+            style="margin-right: 10px"
+            >{{ button.name }}</el-tag
+          >
+        </template>
+      </vxe-grid>
+
+      <!-- 弹窗容器 -->
+      <FormDialog
+        v-model:showFormDialog="dialogConfig.show"
+        :type="dialogConfig.type"
+        :rowData="dialogConfig.data"
+        @success="handleDialogSuccess"
+      />
+    </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, nextTick } from "vue";
+import { ref, reactive } from "vue";
 import { api } from "@/api";
-import { SearchForm, FormDialog } from "./components";
+import { SearchForm, FormDialog, CategorySplitPane } from "./components";
 import type { VxeGridInstance } from "vxe-table";
 import { ElMessage, ElMessageBox } from "element-plus";
 import dayjs from "dayjs";
@@ -85,6 +75,7 @@ const xGrid = ref<VxeGridInstance>();
 const loading = ref(false);
 const tableData = ref([]);
 const selectedRows = ref([]);
+const treeSelectedValue = ref(null); // 选中的树形类型id
 
 // 弹窗配置
 const dialogConfig = reactive<any>({
@@ -129,27 +120,23 @@ const gridOptions = reactive({
   rowConfig: {
     isHover: true,
   },
-  treeConfig: {
-    transform: true,
-    rowField: "id",
-    parentField: "parent_id",
-    expandAll: true,
-  },
   checkboxConfig: {
     checkField: "checked",
     // labelField: 'id',
     highlight: true,
-    // range: true, // 是否支持范围选择
+    range: true, // 是否支持范围选择
     checkMethod: ({ row }) => {
       return !row.isSystem; // 可选择的校验方法，根据需要调整
     },
   },
-  // pagerConfig: {
-  //   total: 0,
-  //   currentPage: 1,
-  //   pageSize: 10,
-  //   pageSizes: [10, 20, 50, 100],
-  // },
+  pagerConfig: {
+    total: 0,
+    currentPage: 1,
+    pageSize: 10,
+    pageSizes: [10, 20, 50, 100],
+    size: "small",
+    // layouts: ['PrevPage', 'JumpNumber', 'NextPage', 'FullJump', 'Sizes', 'Total']
+  },
   toolbarConfig: {
     refresh: true,
     export: true,
@@ -157,21 +144,16 @@ const gridOptions = reactive({
     custom: true,
     slots: {
       buttons: "toolbar_buttons",
-      tools: "toolbar_tools",
     },
   },
   columns: [
     { type: "checkbox", width: 50 },
     { type: "seq", width: 60, align: "left" },
-    { field: "label", title: "菜单标题", treeNode: true },
-    { field: "name", title: "路由名称" },
-    { field: "path", title: "路由路径" },
-    { field: "component", title: "组件路径" },
-    { field: "redirect", title: "重定向" },
-    { field: "hidden", title: "是否隐藏" },
-    // { field: "meta", title: "元信息" },
-    { field: "icon", title: "图标" },
-    { field: "order", title: "排序", width: 70 },
+    { field: "dict_name", title: "字典名称" },
+    { field: "dict_value", title: "字典值" },
+    { field: "language", title: "语言" },
+    { field: "order", title: "排序" },
+    { field: "color", title: "颜色" },
     {
       field: "createtime",
       title: "创建时间",
@@ -196,39 +178,26 @@ const gridEvents = {
   "checkbox-all": handleSelectionChange,
 };
 
-const expandStatus = ref<boolean>(gridOptions?.treeConfig?.expandAll ? true : false); // 记录当前收展状态
-// 展开或收缩树形结构
-const handleTreeIsExpand = (isExpand?: boolean) => {
-  nextTick(() => {
-    if (!gridOptions?.treeConfig) return;
-    if (isExpand === undefined) {
-      isExpand = gridOptions.treeConfig.expandAll === true ? true : false;
-    }
-    if (xGrid.value && xGrid.value.treeConfig) {
-      xGrid.value.setAllTreeExpand(isExpand);
-      expandStatus.value = isExpand;
-    }
-  });
-};
-
 // 加载数据
 const loadData = async (params: any = {}) => {
   loading.value = true;
   try {
-    const res = await api.getList("menu", {
+    const res = await api.getList("dict", {
       where: {
-        label: { contains: params.label },
-        name: { contains: params.name },
+        dict_name: { contains: params.dict_name },
+        dict_value: { contains: params.dict_value },
+        dict_type_id: treeSelectedValue.value,
       },
-      orderBy: [{ order: "asc" }, { createtime: "desc" }],
+      orderby: { order: "asc", createtime: "desc" },
+      page: params.page || gridOptions.pagerConfig.currentPage,
+      pageSize: params.pageSize || gridOptions.pagerConfig.pageSize,
     });
 
     tableData.value = Array.isArray(res.data.data) ? res.data.data : [];
 
     // 如果需要处理分页
     if (xGrid.value) {
-      // gridOptions.pagerConfig.total = res.data.total || 0;
-      handleTreeIsExpand();
+      gridOptions.pagerConfig.total = res.data.total || 0;
     }
   } catch (err) {
     console.error(err);
@@ -236,6 +205,19 @@ const loadData = async (params: any = {}) => {
     loading.value = false;
   }
 };
+
+// 左侧树选择行事件搜索
+function handleCurrentChange(row, data) {
+  console.log(row);
+  if (row.node?.value === "all") {
+    treeSelectedValue.value = null;
+  } else {
+    treeSelectedValue.value = row.node?.id;
+  }
+  gridOptions.pagerConfig.currentPage = 1; // 重置分页
+  gridOptions.pagerConfig.pageSize = 10;
+  loadData();
+}
 
 // 搜索处理
 function handleSearch(formData) {
@@ -246,10 +228,18 @@ const handleReset = () => {
   loadData();
 };
 
+// 分页处理
+const handlePageChange = (params) => {
+  gridOptions.pagerConfig.currentPage = params.currentPage;
+  gridOptions.pagerConfig.pageSize = params.pageSize;
+  loadData({ page: params.currentPage, pageSize: params.pageSize });
+};
+
 // 新增
 const handleAddDialog = () => {
   dialogConfig.type = "add";
-  dialogConfig.data = null;
+  // dialogConfig.data = null;
+  dialogConfig.data = { dict_type_id: treeSelectedValue.value };
   dialogConfig.show = true;
 };
 
@@ -276,7 +266,7 @@ const handleDelete = async (row) => {
       type: "warning",
     })
       .then(async () => {
-        const res = await api.delete("menu", { id: row.id });
+        const res = await api.delete("dict", { id: row.id });
         if (res.data.code === 200) {
           loadData();
           ElMessage({
@@ -304,7 +294,7 @@ const handleBatchDelete = async () => {
     })
       .then(async () => {
         const ids = selectedRows.value.map((row: any) => row.id);
-        const res = await api.delete("menu", ids);
+        const res = await api.delete("dict", ids);
         if (res.data.code === 200) {
           loadData();
           ElMessage({
@@ -344,4 +334,34 @@ loadData();
     background-color: rgba(64, 158, 255, 0.1);
   }
 }
+</style>
+
+<style lang="scss" scoped>
+.dict-container {
+  display: flex;
+  gap: 12px;
+  .sidebar {
+    width: 16%;
+    max-width: 240px;
+    padding: 10px 16px;
+    border: 1px solid #e6e6e6;
+    border-radius: 4px;
+    background-color: #fff;
+  }
+  .content {
+    flex: 1;
+    padding: 10px 16px;
+    border: 1px solid #e6e6e6;
+    border-radius: 4px;
+    background-color: #fff;
+  }
+}
+
+// 在当前页面重写g-view-container全局样式，详情见styles/global.scss
+// .g-view-container {
+//   padding: 0;
+//   border: none;
+//   border-radius: 4px;
+//   background-color: transparent;
+// }
 </style>

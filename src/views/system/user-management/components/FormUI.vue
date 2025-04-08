@@ -16,11 +16,16 @@
         <el-form-item label="邮箱" prop="email">
           <el-input v-model="vFormData.email" placeholder="请输入邮箱"></el-input>
         </el-form-item>
-        <template v-if="type !== 'view'">
-          <el-form-item label="密码" prop="password">
-            <el-input v-model="vFormData.password" type="password" placeholder="请输入密码"></el-input>
-          </el-form-item>
-        </template>
+        <el-form-item label="部门" prop="departmentId">
+          <el-tree-select
+            v-model="vFormData.departmentId"
+            :data="departmentOptions"
+            check-strictly
+            :render-after-expand="false"
+            placeholder="请选择部门"
+            clearable
+          />
+        </el-form-item>
       </el-col>
       <el-col :span="12">
         <el-form-item label="昵称" prop="nickname">
@@ -47,7 +52,6 @@
       </el-col>
     </el-row>
 
-    <!-- 根据类型显示不同的字段 -->
     <template v-if="type !== 'add'">
       <el-form-item label="状态" prop="status">
         <el-switch
@@ -58,7 +62,6 @@
         ></el-switch>
       </el-form-item>
     </template>
-
     <el-form-item label="头像" prop="avatar">
       <el-upload
         class="avatar-uploader"
@@ -98,6 +101,7 @@ import { api } from "@/api";
 import dayjs from "dayjs";
 import { useVModel } from "@/hooks/useVModel";
 import { SERVER_URL } from "@/config";
+import { arrayToTreeOptions } from "@/utils";
 
 const props = withDefaults(defineProps<FormUIProps>(), {
   title: "表单",
@@ -111,7 +115,8 @@ const vFormData = useVModel(props, "formData", emit);
 const labelPosition = ref<FormProps["labelPosition"]>("right");
 const itemLabelPosition = ref<FormItemProps["labelPosition"]>("");
 const formRef = ref();
-const roleOptions = ref([]);
+const roleOptions = ref<any>([]);
+const departmentOptions = ref<any>([]);
 
 // 表单验证规则
 const rules = {
@@ -120,11 +125,11 @@ const rules = {
     { required: true, message: "请输入邮箱", trigger: "blur" },
     { type: "email", message: "请输入正确的邮箱格式", trigger: "blur" },
   ],
-  ...(props.type !== "view"
-    ? {
-        password: [{ required: true, message: "请输入密码", trigger: "blur" }],
-      }
-    : {}),
+  // ...(props.type !== "view"
+  //   ? {
+  //       password: [{ required: true, message: "请输入密码", trigger: "blur" }],
+  //     }
+  //   : {}),
   // 根据类型设置不同的验证规则
   ...(props.type !== "view"
     ? {
@@ -179,12 +184,25 @@ const resetForm = () => {
 const loadRoles = async () => {
   try {
     const res = await api.getList("roles");
-    roleOptions.value = res.data.data?.map((item) => ({
+    roleOptions.value = res.data.data?.map((item: any) => ({
       value: item.id,
       label: item.name,
     }));
   } catch (error) {
     console.error("加载角色列表失败", error);
+  }
+};
+
+// 加载部门列表
+const loadDepartments = async () => {
+  try {
+    const res = await api.getList("department");
+    const data = Array.isArray(res.data.data)
+      ? arrayToTreeOptions(res.data.data, "parent_id", { valueKey: "id", labelKey: "name" })
+      : [];
+    departmentOptions.value = data;
+  } catch (error) {
+    console.error("加载部门列表失败", error);
   }
 };
 
@@ -199,6 +217,7 @@ defineExpose({
 onMounted(() => {});
 nextTick(() => {
   loadRoles();
+  loadDepartments();
 });
 </script>
 

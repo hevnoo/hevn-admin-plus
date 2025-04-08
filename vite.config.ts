@@ -50,10 +50,30 @@ export default defineConfig({
       output: {
         manualChunks(id) {
           if (id.includes("node_modules")) {
-            return id.toString().split("node_modules/")[1].split("/")[0].toString(); // 将第三方库分割
+            return id
+              .toString()
+              .split("node_modules/")[1]
+              .split("/")[0]
+              .toString(); // 将第三方库分割
           }
         },
+        // 添加 CSS 代码分割
+        chunkFileNames: "assets/js/[name]-[hash].js",
+        entryFileNames: "assets/js/[name]-[hash].js",
+        assetFileNames: "assets/[ext]/[name]-[hash].[ext]",
       },
     },
+    // 启用源码压缩
+    minify: "terser",
+    terserOptions: {
+      compress: {
+        drop_console: true, // 生产环境去除 console
+        drop_debugger: true, // 生产环境去除 debugger
+      },
+    },
+    // 启用 CSS 代码分割
+    cssCodeSplit: true,
+    // 生成 sourcemap 以便调试
+    sourcemap: false, // 生产环境关闭 sourcemap
   },
 });

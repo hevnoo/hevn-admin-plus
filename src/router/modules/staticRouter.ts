@@ -1,5 +1,4 @@
 import Layout from "@/layouts/basic/Layout.vue";
-import HomeView from "@/views/home/HomeView.vue";
 import Login from "@/components/login/Login.vue";
 
 export const staticRouter = [
@@ -21,9 +20,12 @@ export const staticRouter = [
       {
         path: "/home",
         name: "home",
-        component: HomeView,
+        component: () => import("@/views/home/index.vue"),
         meta: {
           title: "首页",
+          icon: "home",
+          hidden: false,
+          keepAlive: false,
         },
       },
       // {

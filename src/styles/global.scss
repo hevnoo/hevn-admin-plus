@@ -24,6 +24,12 @@
   border-radius: 4px;
   background-color: #fff;
 }
+:global(.g-view-container-default) {
+  padding: 0;
+  border: none;
+  border-radius: 4px;
+  background-color: transparent;
+}
 
 /**
  * 全局定义 el-dropdown 下拉菜单样式

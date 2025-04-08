@@ -1,4 +1,4 @@
-import { createRouter, createWebHashHistory } from "vue-router";
+import { createRouter, createWebHashHistory, createWebHistory } from "vue-router";
 import { staticRouter, errorRouter, notFoundRouter } from "@/router/modules/staticRouter";
 import { setupRouterGuard } from "./guard";
 import { MenuItem } from "./types";
@@ -6,6 +6,7 @@ import { loadComponent } from "@/utils/router";
 
 const router = createRouter({
   history: createWebHashHistory(),
+  // history: createWebHistory(import.meta.env.BASE_URL), // history
   routes: [...staticRouter, ...errorRouter],
 });
 

@@ -1,11 +1,11 @@
 <template>
-  <template v-if="!item.meta?.hidden">
+  <template v-if="!item?.hidden">
     <el-sub-menu v-if="hasChildren(item)" :index="resolvePath(basePath)" :popper-append-to-body="true">
       <template #title>
-        <el-icon v-if="item.meta?.icon">
-          <component :is="item.meta.icon" />
+        <el-icon v-if="item?.icon">
+          <component :is="item.icon" />
         </el-icon>
-        <span>{{ item.meta?.title || item.name }}</span>
+        <span>{{ item?.title || item.name }}</span>
       </template>
       <template v-for="child in item.children" :key="child.path">
         <menu-item :item="child" :base-path="resolvePath(child.path)" />
@@ -13,18 +13,18 @@
     </el-sub-menu>
 
     <el-menu-item v-else :index="resolvePath(basePath)">
-      <el-icon v-if="item.meta?.icon">
-        <component :is="item.meta.icon" />
+      <el-icon v-if="item?.icon">
+        <component :is="item.icon" />
       </el-icon>
       <template #title>
-        <span>{{ item.meta?.title || item.name }}</span>
+        <span>{{ item?.title || item.name }}</span>
       </template>
     </el-menu-item>
   </template>
 </template>
 
 <script setup lang="ts">
-import { computed, PropType } from "vue";
+import { computed, PropType, defineExpose } from "vue";
 
 interface MenuItemType {
   path: string;

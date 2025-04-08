@@ -7,7 +7,7 @@
     <vxe-grid ref="xGrid" v-bind="gridOptions" v-on="gridEvents" :data="tableData" :loading="loading">
       <!-- 工具栏 -->
       <template #toolbar_buttons>
-        <vxe-button status="primary" @click="handleAddDialog">新增部门</vxe-button>
+        <vxe-button status="primary" @click="handleAddDialog">新增菜单</vxe-button>
         <vxe-button status="danger" :disabled="!selectedRows.length" @click="handleBatchDelete"
           >批量删除</vxe-button
         >
@@ -129,10 +129,6 @@ const gridOptions = reactive({
   rowConfig: {
     isHover: true,
   },
-  // editConfig: {
-  //   trigger: 'click',
-  //   mode: 'cell'
-  // },
   treeConfig: {
     transform: true,
     rowField: "id",
@@ -153,6 +149,7 @@ const gridOptions = reactive({
   //   currentPage: 1,
   //   pageSize: 10,
   //   pageSizes: [10, 20, 50, 100],
+  //   size: "small",
   // },
   toolbarConfig: {
     refresh: true,
@@ -166,10 +163,16 @@ const gridOptions = reactive({
   },
   columns: [
     { type: "checkbox", width: 50 },
-    { type: "seq", width: 60, align: "left" },
-    { field: "name", title: "部门名称", treeNode: true },
-    { field: "code", title: "部门编码" },
-    { field: "order", title: "排序" },
+    // { type: "seq", width: 60, align: "left" },
+    { field: "title", title: "菜单标题", treeNode: true },
+    { field: "name", title: "路由名称标识" },
+    { field: "path", title: "路由路径" },
+    { field: "component", title: "组件路径" },
+    { field: "redirect", title: "重定向" },
+    { field: "hidden", title: "是否隐藏" },
+    // { field: "meta", title: "元信息" },
+    { field: "icon", title: "图标" },
+    { field: "order", title: "排序", width: 70 },
     {
       field: "createtime",
       title: "创建时间",
@@ -213,11 +216,10 @@ const handleTreeIsExpand = (isExpand?: boolean) => {
 const loadData = async (params: any = {}) => {
   loading.value = true;
   try {
-    const res = await api.getList("department", {
+    const res = await api.getList("menu", {
       where: {
+        label: { contains: params.label },
         name: { contains: params.name },
-        code: { contains: params.code },
-        order: params.order,
       },
       orderBy: [{ order: "asc" }, { createtime: "desc" }],
     });
@@ -275,7 +277,7 @@ const handleDelete = async (row) => {
       type: "warning",
     })
       .then(async () => {
-        const res = await api.delete("department", { id: row.id });
+        const res = await api.delete("menu", { id: row.id });
         if (res.data.code === 200) {
           loadData();
           ElMessage({
@@ -303,7 +305,7 @@ const handleBatchDelete = async () => {
     })
       .then(async () => {
         const ids = selectedRows.value.map((row: any) => row.id);
-        const res = await api.delete("department", ids);
+        const res = await api.delete("menu", ids);
         if (res.data.code === 200) {
           loadData();
           ElMessage({

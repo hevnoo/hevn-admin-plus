@@ -19,10 +19,12 @@
       :data="filteredMenuOptions"
       show-checkbox
       node-key="id"
-      :default-checked-keys="checkedKeys"
+      :default-checked-keys="defaultCheckedKeys"
       :props="defaultProps"
       default-expand-all
       check-strictly
+      highlight-current
+      :expand-on-click-node="false"
     />
     <template #footer>
       <!-- <el-button @click="handleClose">取消</el-button> -->
@@ -59,12 +61,11 @@ const showMenuPermissionsDialog = computed({
 
 const defaultProps = {
   children: "children",
-  label: "label",
+  label: "title",
 };
 
 const treeRef = ref<any>();
-const checkedKeys = ref<string[]>([]);
-const data = computed(() => props.menuOptions);
+const defaultCheckedKeys = ref<string[]>([]);
 const searchValue = ref<string>("");
 
 const InitForm = {
@@ -72,23 +73,25 @@ const InitForm = {
 };
 const formData = ref(JSON.parse(JSON.stringify(InitForm)));
 
+const data = computed(() => props.menuOptions);
+
 const filteredMenuOptions = computed(() => {
   if (!searchValue.value) return props.menuOptions;
   // return data.value.filter((item) => filterRecursion(item, searchValue.value));
-  return filterTree(props.menuOptions);
+  return filterTree(props.menuOptions, 'title');
 });
 
-function filterTree(nodes: any[]): any[] {
+function filterTree(nodes: any[], field: string): any[] {
   const result: any[] = [];
 
   for (const node of nodes) {
     // 创建新的节点对象，避免修改原始数据
     const newNode = { ...node };
     // 检查当前节点是否匹配
-    const isMatch = node.label.toLowerCase().includes(searchValue.value.toLowerCase());
+    const isMatch = node[field].toLowerCase().includes(searchValue.value.toLowerCase());
     // 如果有子节点，递归过滤
     if (node.children && node.children.length) {
-      newNode.children = filterTree(node.children);
+      newNode.children = filterTree(node.children, field);
     }
     // 如果当前节点匹配或者子节点中有匹配项，则保留该节点
     if (isMatch || (newNode.children && newNode.children.length)) {
@@ -105,7 +108,7 @@ function filterTree(nodes: any[]): any[] {
 //     // 创建新的节点对象，避免修改原始数据
 //     const newNode = { ...node };
 //     // 检查当前节点是否匹配
-//     const isMatch = node.label.toLowerCase().includes(searchValue.value.toLowerCase());
+//     const isMatch = node.title.toLowerCase().includes(searchValue.value.toLowerCase());
 //     // 如果有子节点，递归过滤
 
 //     // 如果当前节点匹配或者子节点中有匹配项，则保留该节点
@@ -156,7 +159,7 @@ const setCheckedRecursive = (nodes: any, checked: boolean) => {
 
 const handleClose = () => {
   showMenuPermissionsDialog.value = false;
-  checkedKeys.value = [];
+  defaultCheckedKeys.value = [];
   checkAll.value = false;
   expandAll.value = true;
 };
@@ -166,7 +169,6 @@ const handleSubmit = async () => {
   const checkedNodes = treeRef.value.getCheckedKeys();
   // 获取半选中的节点keys（父节点）
   const halfCheckedNodes = treeRef.value.getHalfCheckedKeys();
-
   // 合并所有选中的节点
   const allSelectedKeys = [...checkedNodes, ...halfCheckedNodes];
 
@@ -195,10 +197,9 @@ const loadPermissionsMenuList = async (roleId: string) => {
     orderBy: [{ order: "asc" }, { createtime: "desc" }],
   });
   // 设置默认选中的节点
-  checkedKeys.value = res.data.data?.map((item) => item.id) || [];
+  defaultCheckedKeys.value = res.data.data?.map((item: any) => item.id) || [];
 };
 
-nextTick(() => {});
 </script>
 
 <style scoped lang="scss"></style>

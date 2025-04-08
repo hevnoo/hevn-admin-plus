@@ -5,7 +5,6 @@
     width="800px"
     :draggable="true"
     :close-on-click-modal="false"
-    destroy-on-close
     @close="handleClose"
   >
     <FormUI ref="formRef" :type="type" v-model:formData="formData" @form-change="handleFormChange" />
@@ -37,18 +36,18 @@ const formRef = ref();
 
 // 表单数据
 const initForm = {
-  label: "",
-  value: "",
-  name: "",
-  path: "/",
-  component: "/",
-  redirect: "",
-  hidden: false,
-  meta: "",
-  icon: "",
-  order: 0,
+  username: "",
+  nickname: "",
+  email: "",
+  phone: "",
+  avatar: "",
+  roles: [],
+  roleIds: [],
+  department: [],
+  departmentId: [],
+  status: true,
 };
-const formData = ref<any>(initForm);
+const formData = ref<FormDataProps>(JSON.parse(JSON.stringify(initForm)));
 
 let originalFormData: any = {}; // 记录原始表单数据，用于比较
 
@@ -61,11 +60,11 @@ const showDialog = computed({
 // 对话框标题
 const dialogTitle = computed(() => {
   const titles = {
-    add: "新增",
-    edit: "编辑",
-    view: "详情",
+    add: "新增用户",
+    edit: "编辑用户",
+    view: "用户详情",
   };
-  return titles[props.type] || "信息";
+  return titles[props.type] || "用户信息";
 });
 
 // 监听行数据变化，初始化表单
@@ -79,8 +78,8 @@ watch(
         const data = JSON.parse(JSON.stringify({ ...formData.value, ...newRowData }));
         formData.value = {
           ...data,
-          meta: JSON.stringify(data.meta),
-          parentId: data.parent_id,
+          roleIds: data.roles.map((item: any) => item.id),
+          departmentId: data.department.map((item: any) => item.id)?.[0],
         };
         originalFormData = JSON.parse(JSON.stringify(formData.value));
       } else if (newType === "add") {
@@ -111,41 +110,31 @@ const resetForm = () => {
   }
 };
 
-// 验证JSON
-const validateJson = (value: string) => {
-  try {
-    JSON.parse(value);
-    return true;
-  } catch (e) {
-    return false;
-  }
-};
-
 // 提交表单
 const handleSubmit = async () => {
   if (!formRef.value) return;
 
   try {
-    // 调用子组件的验证方法
+    // 调用子组件expose出的验证方法
     const valid = await formRef.value.validate();
     if (!valid) return;
 
     // 根据类型执行不同的操作
     if (props.type === "add") {
-      const { label, path, name, component, redirect, hidden, meta, icon, order, parentId } = formData.value;
+      const { username, nickname, email, phone, avatar, status, roleIds, departmentId } = formData.value;
       const params = {
-        label,
-        path,
-        name,
-        component,
-        redirect,
-        hidden,
-        meta: validateJson(meta) ? JSON.parse(meta) : meta,
-        icon,
-        order,
-        parent_id: parentId || null,
+        username,
+        password: "123456",
+        nickname,
+        email,
+        phone,
+        avatar,
+        status,
+        roles: roleIds,
+        department: Array.isArray(departmentId) ? departmentId : [departmentId],
+        include: ["roles", "department"],
       };
-      const res = await api.create("menu", params);
+      const res = await api.create("users", params);
       if (res.data.code === 200) {
         ElMessage.success("添加成功");
         // 通知父组件操作成功
@@ -156,21 +145,22 @@ const handleSubmit = async () => {
         ElMessage.error("添加失败");
       }
     } else if (props.type === "edit") {
-      const { id, label, path, name, component, redirect, hidden, meta, icon, order, parentId } =
-        formData.value;
+      const { id, username, nickname, email, phone, avatar, status, roleIds, departmentId } = formData.value;
       let params: any = {
-        label,
-        path,
-        name,
-        component,
-        redirect,
-        hidden,
-        meta: validateJson(meta) ? JSON.parse(meta) : meta,
-        icon,
-        order,
-        parent_id: parentId || null,
+        nickname,
+        phone,
+        avatar,
+        status,
+        roles: roleIds,
+        department: Array.isArray(departmentId) ? departmentId : [departmentId],
+        include: ["roles", "department"],
       };
-      const res = await api.update("menu", id, params);
+      // // 记录表单中被修改的字段
+      // if (originalFormData.password !== formData.value.password) {
+      //   params.password = formData.value.password;
+      // }
+
+      const res = await api.update("users", id, params);
       if (res.data.code === 200) {
         ElMessage.success("更新成功");
         // 通知父组件操作成功

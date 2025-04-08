@@ -5,6 +5,7 @@
     width="800px"
     :draggable="true"
     :close-on-click-modal="false"
+    destroy-on-close
     @close="handleClose"
   >
     <FormUI ref="formRef" :type="type" v-model:formData="formData" @form-change="handleFormChange" />
@@ -36,16 +37,18 @@ const formRef = ref();
 
 // 表单数据
 const initForm = {
-  username: "",
-  nickname: "",
-  email: "",
-  phone: "",
-  avatar: "",
-  roles: [],
-  roleIds: [],
-  status: true,
+  title: "",
+  value: "",
+  name: "",
+  path: "/",
+  component: "/",
+  redirect: "",
+  hidden: false,
+  meta: "",
+  icon: "",
+  order: 0,
 };
-const formData = ref<FormDataProps>(JSON.parse(JSON.stringify(initForm)));
+const formData = ref<any>(initForm);
 
 let originalFormData: any = {}; // 记录原始表单数据，用于比较
 
@@ -58,11 +61,11 @@ const showDialog = computed({
 // 对话框标题
 const dialogTitle = computed(() => {
   const titles = {
-    add: "新增用户",
-    edit: "编辑用户",
-    view: "用户详情",
+    add: "新增",
+    edit: "编辑",
+    view: "详情",
   };
-  return titles[props.type] || "用户信息";
+  return titles[props.type] || "信息";
 });
 
 // 监听行数据变化，初始化表单
@@ -76,7 +79,8 @@ watch(
         const data = JSON.parse(JSON.stringify({ ...formData.value, ...newRowData }));
         formData.value = {
           ...data,
-          roleIds: data.roles.map((item) => item.id),
+          meta: JSON.stringify(data.meta),
+          parentId: data.parent_id,
         };
         originalFormData = JSON.parse(JSON.stringify(formData.value));
       } else if (newType === "add") {
@@ -107,6 +111,16 @@ const resetForm = () => {
   }
 };
 
+// 验证JSON
+const validateJson = (value: string) => {
+  try {
+    JSON.parse(value);
+    return true;
+  } catch (e) {
+    return false;
+  }
+};
+
 // 提交表单
 const handleSubmit = async () => {
   if (!formRef.value) return;
@@ -118,19 +132,20 @@ const handleSubmit = async () => {
 
     // 根据类型执行不同的操作
     if (props.type === "add") {
-      const { username, nickname, email, phone, password, avatar, status, roleIds } = formData.value;
+      const { title, path, name, component, redirect, hidden, meta, icon, order, parentId } = formData.value;
       const params = {
-        username,
-        nickname,
-        email,
-        phone,
-        password,
-        avatar,
-        status,
-        roles: roleIds,
-        include: ["roles"],
+        title,
+        path,
+        name,
+        component,
+        redirect,
+        hidden,
+        meta: validateJson(meta) ? JSON.parse(meta) : meta,
+        icon,
+        order,
+        parent_id: parentId || null,
       };
-      const res = await api.create("users", params);
+      const res = await api.create("menu", params);
       if (res.data.code === 200) {
         ElMessage.success("添加成功");
         // 通知父组件操作成功
@@ -141,21 +156,21 @@ const handleSubmit = async () => {
         ElMessage.error("添加失败");
       }
     } else if (props.type === "edit") {
-      const { id, username, nickname, email, phone, avatar, status, roleIds } = formData.value;
+      const { id, title, path, name, component, redirect, hidden, meta, icon, order, parentId } =
+        formData.value;
       let params: any = {
-        nickname,
-        phone,
-        avatar,
-        status,
-        roles: roleIds,
-        include: ["roles"],
+        title,
+        path,
+        name,
+        component,
+        redirect,
+        hidden,
+        meta: validateJson(meta) ? JSON.parse(meta) : meta,
+        icon,
+        order,
+        parent_id: parentId || null,
       };
-      // 记录表单中被修改的字段
-      if (originalFormData.password !== formData.value.password) {
-        params.password = formData.value.password;
-      }
-
-      const res = await api.update("users", id, params);
+      const res = await api.update("menu", id, params);
       if (res.data.code === 200) {
         ElMessage.success("更新成功");
         // 通知父组件操作成功

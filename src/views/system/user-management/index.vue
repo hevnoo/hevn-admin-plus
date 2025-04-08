@@ -1,55 +1,71 @@
 <template>
-  <div class="user-management">
-    <!-- 搜索表单组件 -->
-    <SearchForm ref="searchFormRef" @search="handleSearch" @reset="handleReset" />
+  <div class="g-view-container-default user-container">
+    <!-- 部门拆分 -->
+    <DeptSplitPane class="left-pane" @current-change="handlePaneCurrentChange" />
 
-    <!-- 表格部分 -->
-    <vxe-grid
-      ref="xGrid"
-      v-bind="gridOptions"
-      v-on="gridEvents"
-      :data="tableData"
-      :loading="loading"
-      @page-change="handlePageChange"
-    >
-      <!-- 工具栏 -->
-      <template #toolbar_buttons>
-        <vxe-button status="primary" @click="handleAddDialog">新增角色</vxe-button>
-        <vxe-button status="danger" :disabled="!selectedRows.length" @click="handleBatchDelete"
-          >批量删除</vxe-button
-        >
-      </template>
+    <div class="main-pane">
+      <!-- 搜索表单组件 -->
+      <SearchForm ref="searchFormRef" @search="handleSearch" @reset="handleReset" />
 
-      <!-- 操作列 -->
-      <template #operation="{ row }">
-        <!-- <vxe-button mode="text" status="primary" @click="handleViewDialog(row)">详情</vxe-button> -->
-        <vxe-button mode="text" status="primary" @click="handleMenuPermissionsDialog(row)"
-          >菜单权限</vxe-button
-        >
-        <vxe-button mode="text" status="primary" @click="handleEditDialog(row)">编辑</vxe-button>
-        <vxe-button mode="text" status="error" @click="handleDelete(row)">删除</vxe-button>
-      </template>
+      <!-- 表格部分 -->
+      <vxe-grid
+        ref="xGrid"
+        v-bind="gridOptions"
+        v-on="gridEvents"
+        :data="tableData"
+        :loading="loading"
+        @page-change="handlePageChange"
+      >
+        <!-- 工具栏 -->
+        <template #toolbar_buttons>
+          <vxe-button status="primary" @click="handleAddDialog">新增用户</vxe-button>
+          <vxe-button status="danger" :disabled="!selectedRows.length" @click="handleBatchDelete"
+            >批量删除</vxe-button
+          >
+        </template>
 
-      <!-- column -->
-      <template #buttons="{ row }">
-        <el-tag
-          v-for="button in row.buttons"
-          :key="button.id"
-          :type="
-            button.value === 'add'
-              ? 'success'
-              : button.value === 'edit'
-              ? 'warning'
-              : button.value === 'delete'
-              ? 'danger'
-              : 'primary'
-          "
-          size="large"
-          style="margin-right: 10px"
-          >{{ button.name }}</el-tag
-        >
-      </template>
-    </vxe-grid>
+        <!-- 操作列 -->
+        <template #operation="{ row }">
+          <vxe-button mode="text" status="primary" @click="handleEditDialog(row)">编辑</vxe-button>
+          <vxe-button mode="text" status="error" @click="handleDelete(row)">删除</vxe-button>
+          <el-dropdown trigger="hover">
+            <vxe-button mode="text" status="primary">更多</vxe-button>
+            <template #dropdown>
+              <el-dropdown-menu>
+                <el-dropdown-item @click="handleViewDialog(row)">详情</el-dropdown-item>
+                <el-dropdown-item @click="handleResetPassword(row)">重置密码</el-dropdown-item>
+              </el-dropdown-menu>
+            </template>
+          </el-dropdown>
+        </template>
+
+        <!-- column -->
+        <template #department="{ row }">
+          <el-tag
+            v-for="item in row.department"
+            :key="item.id"
+            :type="!item.parentId ? 'success' : 'primary'"
+            style="margin-right: 10px"
+            >{{ item.name }}</el-tag
+          >
+        </template>
+        <template #roles="{ row }">
+          <el-tag v-for="item in row.roles" :key="item.id" :type="'primary'" style="margin-right: 10px">{{
+            item.name
+          }}</el-tag>
+          <!-- <span style="color: #67c23a; white-space: pre-line">
+            {{ row.roles.map((role) => role.name).join(",\n") }}
+          </span> -->
+        </template>
+        <template #avatar="{ row }">
+          <BaseImage
+            :url="SERVER_URL + row.avatar"
+            :srcList="[`${SERVER_URL}${row.avatar}`]"
+            :align="'left'"
+          />
+        </template>
+      </vxe-grid>
+    </div>
 
     <!-- 弹窗容器 -->
     <FormDialog
@@ -58,10 +74,9 @@
       :rowData="dialogConfig.data"
       @success="handleDialogSuccess"
     />
-    <MenuPermissionsDialog
-      v-model:showMenuPermissionsDialog="dialogConfig.menuPermissionsConfig.show"
-      :rowData="dialogConfig.menuPermissionsConfig.data"
-      :menuOptions="dialogConfig.menuPermissionsConfig.menuOptions"
+    <ResetPasswordDialog
+      v-model:showResetPasswordDialog="dialogConfig.showResetPasswordConfig.show"
+      :rowData="dialogConfig.showResetPasswordConfig.data"
       @success="handleDialogSuccess"
     />
   </div>
@@ -70,11 +85,12 @@
 <script setup lang="ts">
 import { ref, reactive } from "vue";
 import { api } from "@/api";
-import { SearchForm, FormDialog, MenuPermissionsDialog } from "./components";
+import { SearchForm, FormDialog, ResetPasswordDialog, DeptSplitPane } from "./components";
+import { BaseImage } from "@/components/basic";
 import type { VxeGridInstance } from "vxe-table";
 import { ElMessage, ElMessageBox } from "element-plus";
 import dayjs from "dayjs";
-import { arrayToTree } from "@/utils";
+import { SERVER_URL } from "@/config";
 
 const xGrid = ref<VxeGridInstance>();
 const loading = ref(false);
@@ -86,13 +102,24 @@ const dialogConfig = reactive<any>({
   show: false,
   type: "", // add, edit, view
   data: null,
-  menuPermissionsConfig: {
+  showResetPasswordConfig: {
     show: false,
     data: null,
-    menuOptions: [],
   },
 });
 const cellRenders = {
+  // avatarUrlCellRender: reactive<any>({
+  //   name: "VxeImage",
+  //   props: {
+  //     // circle: true,
+  //     width: 36,
+  //     height: 36,
+  //     fit: "cover",
+  //     src: ({ row }) => {
+  //       return SERVER_URL + row.avatar;
+  //     },
+  //   },
+  // }),
   statusCellRender: reactive<any>({
     name: "VxeSwitch",
     props: {
@@ -143,6 +170,7 @@ const gridOptions = reactive({
     currentPage: 1,
     pageSize: 10,
     pageSizes: [10, 20, 50, 100],
+    size: "small",
     // layouts: ['PrevPage', 'JumpNumber', 'NextPage', 'FullJump', 'Sizes', 'Total']
   },
   toolbarConfig: {
@@ -157,13 +185,31 @@ const gridOptions = reactive({
   columns: [
     { type: "checkbox", width: 50 },
     { type: "seq", width: 60, align: "left" },
-    { field: "name", title: "角色名称" },
-    { field: "value", title: "角色值" },
-    { field: "description", title: "描述" },
     {
-      field: "buttons",
-      title: "按钮",
-      slots: { default: "buttons" },
+      field: "avatar",
+      title: "头像",
+      // cellRender: cellRenders.avatarUrlCellRender,
+      slots: { default: "avatar" },
+    },
+    { field: "username", title: "用户名" },
+    { field: "nickname", title: "昵称" },
+    { field: "email", title: "邮箱" },
+    { field: "phone", title: "手机号" },
+    {
+      field: "department",
+      title: "部门",
+      slots: { default: "department" },
+    },
+    {
+      field: "roles",
+      title: "角色",
+      slots: { default: "roles" },
+    },
+    {
+      field: "status",
+      title: "状态",
+      width: 100,
+      cellRender: cellRenders.statusCellRender,
     },
     {
       field: "createtime",
@@ -189,27 +235,23 @@ const gridEvents = {
   "checkbox-all": handleSelectionChange,
 };
 
-const loadMenuOptions = async () => {
-  const res = await api.getList("menu", {
-    orderBy: [{ order: "asc" }, { createtime: "desc" }],
-  });
-  dialogConfig.menuPermissionsConfig.menuOptions = Array.isArray(res.data.data)
-    ? arrayToTree(res.data.data)
-    : [];
-};
+const where = reactive<any>({}); // 缓存搜索条件
 
 // 加载数据
 const loadData = async (params: any = {}) => {
   loading.value = true;
   try {
-    const res = await api.getList("roles", {
+    const res = await api.getList("users", {
       where: {
-        name: { contains: params.name },
-        value: { contains: params.value },
+        username: params.username ? { contains: params.username } : {},
+        email: params.email ? { contains: params.email } : {},
+        ...(typeof params.status === "boolean" ? { status: params.status } : {}),
+        // ...(params.departmentIds ? { department: { some: { id: { in: params.departmentIds } } } } : {}),
+        ...(where.departmentIds ? { department: { some: { id: { in: where.departmentIds } } } } : {}),
       },
       page: params.page || gridOptions.pagerConfig.currentPage,
       pageSize: params.pageSize || gridOptions.pagerConfig.pageSize,
-      include: ["buttons"],
+      include: ["roles", "department"],
     });
 
     tableData.value = Array.isArray(res.data.data) ? res.data.data : [];
@@ -218,9 +260,6 @@ const loadData = async (params: any = {}) => {
     if (xGrid.value) {
       gridOptions.pagerConfig.total = res.data.total || 0;
     }
-
-    // 加载菜单选项
-    loadMenuOptions();
   } catch (err) {
     console.error(err);
   } finally {
@@ -265,10 +304,10 @@ const handleViewDialog = (row) => {
   dialogConfig.show = true;
 };
 
-// 菜单权限
-const handleMenuPermissionsDialog = (row) => {
-  dialogConfig.menuPermissionsConfig.data = row;
-  dialogConfig.menuPermissionsConfig.show = true;
+// 重置密码
+const handleResetPassword = (row) => {
+  dialogConfig.showResetPasswordConfig.show = true;
+  dialogConfig.showResetPasswordConfig.data = row;
 };
 
 // 删除
@@ -280,7 +319,7 @@ const handleDelete = async (row) => {
       type: "warning",
     })
       .then(async () => {
-        const res = await api.delete("roles", { id: row.id });
+        const res = await api.delete("users", { id: row.id });
         if (res.data.code === 200) {
           loadData();
           ElMessage({
@@ -308,7 +347,7 @@ const handleBatchDelete = async () => {
     })
       .then(async () => {
         const ids = selectedRows.value.map((row: any) => row.id);
-        const res = await api.delete("roles", ids);
+        const res = await api.delete("users", ids);
         if (res.data.code === 200) {
           loadData();
           ElMessage({
@@ -336,6 +375,16 @@ function handleSelectionChange({ checked, records }) {
   selectedRows.value = records;
 }
 
+const handlePaneCurrentChange = (row: any, node: any) => {
+  gridOptions.pagerConfig.currentPage = 1; // 重置分页
+  gridOptions.pagerConfig.pageSize = 10;
+
+  where.departmentIds = row.departmentIds; // 缓存搜索条件，departmentIds不受搜索/重置影响
+  loadData({
+    departmentIds: row.departmentIds,
+  });
+};
+
 // 初始化
 loadData();
 </script>
@@ -346,6 +395,26 @@ loadData();
   background-color: rgba(64, 158, 255, 0.1);
   &:hover {
     background-color: rgba(64, 158, 255, 0.1);
+  }
+}
+
+.user-container {
+  display: flex;
+  gap: 12px;
+  .left-pane {
+    width: 16%;
+    max-width: 240px;
+    padding: 10px 16px;
+    border: 1px solid #e6e6e6;
+    border-radius: 4px;
+    background-color: #fff;
+  }
+  .main-pane {
+    flex: 1;
+    padding: 10px 16px;
+    border: 1px solid #e6e6e6;
+    border-radius: 4px;
+    background-color: #fff;
   }
 }
 </style>

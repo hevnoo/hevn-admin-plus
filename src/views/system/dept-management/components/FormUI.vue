@@ -38,6 +38,7 @@
             :data="parentOptions"
             check-strictly
             :render-after-expand="false"
+            highlight-current
             placeholder="请选择上级部门"
             clearable
           />
